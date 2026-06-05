@@ -458,12 +458,28 @@ function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").repl
 // ── API CALL ──
 async function ai(system, user, max=2000){
   if(G.stopped) throw new Error("Stopped");
-  const r = await fetch(BACKEND, {
-    method:"POST", headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({ system, messages:[{role:"user",content:user}], max_tokens:max })
-  });
-  if(!r.ok){ const e=await r.json(); throw new Error(e.error || "Server error "+r.status); }
-  const d = await r.json();
+  let r;
+  try {
+    r = await fetch(BACKEND, {
+      method:"POST", headers:{"Content-Type":"application/json"},
+      body: JSON.stringify({ system, messages:[{role:"user",content:user}], max_tokens:max })
+    });
+  } catch(netErr) {
+    throw new Error("Cannot reach server. Make sure your Vercel deployment is live and API keys are set in Environment Variables.");
+  }
+  const raw = await r.text();
+  let d;
+  try { d = JSON.parse(raw); }
+  catch(e) {
+    // Server returned HTML (404/500 page) instead of JSON
+    if(raw.includes("NOT_FOUND") || r.status === 404)
+      throw new Error("API route not found (404). Push the latest vercel.json and api/ files to GitHub and redeploy.");
+    if(r.status === 500)
+      throw new Error("Server error 500. Check Vercel logs — likely missing GEMINI_API_KEY in Environment Variables.");
+    throw new Error("Server returned unexpected response (status "+r.status+"). Check Vercel Function Logs.");
+  }
+  if(!r.ok) throw new Error(d.error || "API error "+r.status);
+  if(!d.content) throw new Error(d.error || "Empty response from AI. Check your API keys.");
   return d.content.map(b=>b.text||"").join("");
 }
 
@@ -839,7 +855,10 @@ async function analyzeVideo(){
       method:"POST", headers:{"Content-Type":"application/json"},
       body:JSON.stringify({frames:_frames, context:ctx})
     });
-    const d=await r.json();
+    const raw2=await r.text();
+    let d;
+    try{ d=JSON.parse(raw2); }
+    catch(e){ throw new Error("Video API route not found. Check vercel.json is updated and redeployed."); }
     if(!r.ok) throw new Error(d.error||"Analysis failed");
     _lastAnalysis=d.analysis;
     // Format sections
