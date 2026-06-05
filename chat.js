@@ -1,23 +1,22 @@
 // api/chat.js — Dual AI backend: tries Gemini first, falls back to Grok
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
   if (req.method === "OPTIONS") return res.status(200).end();
   if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
 
-  const { system, messages, preferGrok } = req.body;
+  const { system, messages, max_tokens, preferGrok } = req.body;
   const geminiKey = process.env.GEMINI_API_KEY;
   const grokKey   = process.env.GROK_API_KEY;
 
   if (!geminiKey && !grokKey) {
-    return res.status(500).json({ error: "No API keys configured on server. Add GEMINI_API_KEY or GROK_API_KEY in Vercel environment variables." });
+    return res.status(500).json({ error: "No API keys configured. Add GEMINI_API_KEY or GROK_API_KEY in Vercel Environment Variables." });
   }
 
-  // Build unified prompt (both APIs take system + user)
   const userContent = messages?.[0]?.content || "";
 
-  // ── Try Gemini first (unless caller prefers Grok) ──
+  // ── Try Gemini first ──
   if (geminiKey && !preferGrok) {
     try {
       const geminiRes = await fetch(
@@ -28,7 +27,7 @@ export default async function handler(req, res) {
           body: JSON.stringify({
             system_instruction: { parts: [{ text: system || "" }] },
             contents: [{ role: "user", parts: [{ text: userContent }] }],
-            generationConfig: { maxOutputTokens: req.body.max_tokens || 2000, temperature: 0.7 }
+            generationConfig: { maxOutputTokens: max_tokens || 2000, temperature: 0.7 }
           })
         }
       );
@@ -41,7 +40,7 @@ export default async function handler(req, res) {
       }
       console.error("Gemini error:", JSON.stringify(gData));
     } catch (e) {
-      console.error("Gemini fetch failed:", e.message);
+      console.error("Gemini failed:", e.message);
     }
   }
 
@@ -56,7 +55,7 @@ export default async function handler(req, res) {
         },
         body: JSON.stringify({
           model: "grok-beta",
-          max_tokens: req.body.max_tokens || 2000,
+          max_tokens: max_tokens || 2000,
           messages: [
             { role: "system", content: system || "" },
             { role: "user",   content: userContent }
@@ -72,9 +71,9 @@ export default async function handler(req, res) {
       }
       console.error("Grok error:", JSON.stringify(xData));
     } catch (e) {
-      console.error("Grok fetch failed:", e.message);
+      console.error("Grok failed:", e.message);
     }
   }
 
-  return res.status(500).json({ error: "Both AI APIs failed. Check your API keys in Vercel environment variables." });
-}
+  return res.status(500).json({ error: "Both AI APIs failed. Check your API keys in Vercel Environment Variables." });
+};
