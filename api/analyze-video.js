@@ -1,5 +1,5 @@
 const { guard } = require('./_lib/security');
-const { pickModels, complete } = require('./_lib/openrouter');
+const { pickModels, complete, orKey, hasAnyKey } = require('./_lib/openrouter');
 
 const MAX_FRAMES = 8;
 const MAX_FRAME_CHARS = 600000;
@@ -8,9 +8,10 @@ module.exports = async function handler(req, res) {
   if (guard(req, res, 20)) return;
 
   const reqId = Math.random().toString(36).slice(2, 8);
-  const key = process.env.OPENROUTER_API_KEY;
-  if (!key) {
-    return res.status(500).json({ error: 'OPENROUTER_API_KEY not set in Vercel Environment Variables.' });
+  if (!hasAnyKey()) {
+    return res.status(500).json({
+      error: 'No API key found in this deployment. Add OPENROUTER_API_KEY (or GROQ_API_KEY) in Vercel, tick Production AND Preview, then Redeploy. Open /api/health on this site to see which variables this deployment can see.',
+    });
   }
 
   const { frames, context } = req.body || {};
@@ -38,6 +39,7 @@ module.exports = async function handler(req, res) {
     content.push({ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + f } });
   });
 
+  const key = orKey();
   const models = await pickModels(key, { vision: true });
   const result = await complete({
     key,
@@ -54,7 +56,7 @@ module.exports = async function handler(req, res) {
   }
 
   return res.status(502).json({
-    error: result.fatal || ('Video analysis failed. ' + (result.attempts.length ? result.attempts.join(' | ') : 'No vision-capable free models available right now.')),
+    error: result.fatal || ('Video analysis failed. ' + (result.attempts.length ? result.attempts.join(' | ') : 'No vision-capable models available right now.')),
     reqId,
   });
 };
