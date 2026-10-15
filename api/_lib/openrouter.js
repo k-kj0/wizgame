@@ -12,16 +12,34 @@ const badModels = new Map();   // model id -> time until which we skip it
 let orBlockedUntil = 0;        // set when OpenRouter's daily free limit is hit
 
 // ---------- keys ----------
-function groqKey() {
-  if (process.env.GROQ_API_KEY) return process.env.GROQ_API_KEY;
-  const legacy = process.env.GROK_API_KEY || '';
-  return legacy.startsWith('gsk_') ? legacy : null; // a gsk_ key is Groq, not xAI
+// Keys are sorted by their format first (gsk_ = Groq, xai- = xAI, sk-or- = OpenRouter),
+// so a key saved under the wrong variable name still gets used correctly.
+function env(name) { return (process.env[name] || '').trim(); }
+
+function classifyKeys() {
+  const out = { openrouter: null, groq: null, xai: null };
+  const sources = [
+    ['OPENROUTER_API_KEY', 'openrouter'],
+    ['GROQ_API_KEY', 'groq'],
+    ['XAI_API_KEY', 'xai'],
+    ['GROK_API_KEY', null], // ambiguous name: decide by prefix only
+  ];
+  sources.forEach(([name, defaultKind]) => {
+    const v = env(name);
+    if (!v) return;
+    let kind = defaultKind;
+    if (v.startsWith('gsk_')) kind = 'groq';
+    else if (v.startsWith('xai-')) kind = 'xai';
+    else if (v.startsWith('sk-or-')) kind = 'openrouter';
+    if (kind && !out[kind]) out[kind] = v;
+  });
+  return out;
 }
-function xaiKey() {
-  if (process.env.XAI_API_KEY) return process.env.XAI_API_KEY;
-  const legacy = process.env.GROK_API_KEY || '';
-  return legacy.startsWith('xai-') ? legacy : null;
-}
+
+function orKey() { return classifyKeys().openrouter; }
+function groqKey() { return classifyKeys().groq; }
+function xaiKey() { return classifyKeys().xai; }
+function hasAnyKey() { const k = classifyKeys(); return !!(k.openrouter || k.groq || k.xai); }
 
 // ---------- shared helpers ----------
 function isBad(id) {
@@ -111,9 +129,10 @@ function isFreeTextModel(m) {
     && !m.id.startsWith('openrouter/');
 }
 
-// Ordered OpenRouter model IDs to try.
+// Ordered OpenRouter model IDs to try. Returns [] if there is no OpenRouter key.
 // Optional Vercel env overrides: FREE_MODELS (chat) and VISION_MODELS (video), comma-separated.
 async function pickModels(key, { vision = false, max = 5 } = {}) {
+  if (!key) return [];
   const pinned = (process.env[vision ? 'VISION_MODELS' : 'FREE_MODELS'] || '')
     .split(',').map(s => s.trim()).filter(Boolean);
   const data = await loadModels(key);
@@ -167,8 +186,9 @@ const DAILY_LIMIT_MSG =
 const BAD_KEY_MSG =
   'OpenRouter rejected the API key (HTTP 401). Create a new key at openrouter.ai/keys, update OPENROUTER_API_KEY in Vercel, then redeploy.';
 
-// Order: 1) OpenRouter models  2) Groq (GROQ_API_KEY)  3) xAI Grok (paid, needs an xai- key).
-// Env switches: USE_GROQ=false, USE_GROK=false. Optional: GROK_MODEL (default "grok-latest").
+// Order: 1) OpenRouter models  2) Groq  3) xAI Grok (paid, needs an xai- key).
+// `key` is the OpenRouter key and may be empty. Env switches: USE_GROQ=false, USE_GROK=false.
+// Optional: GROK_MODEL (default "grok-latest").
 async function complete({ key, models, messages, maxTokens, siteUrl, budgetMs = 45000, perModelMs = 20000 }) {
   const attempts = [];
   const extra = []; // failures from Groq / xAI, appended to the final error
@@ -176,7 +196,9 @@ async function complete({ key, models, messages, maxTokens, siteUrl, budgetMs = 
   let fatal = null;
 
   // 1) OpenRouter
-  if (Date.now() < orBlockedUntil) {
+  if (!key) {
+    attempts.push('openrouter skipped: no OpenRouter key in this deployment');
+  } else if (Date.now() < orBlockedUntil) {
     attempts.push('openrouter skipped: daily free limit hit recently');
     fatal = DAILY_LIMIT_MSG;
   } else {
@@ -252,4 +274,4 @@ async function complete({ key, models, messages, maxTokens, siteUrl, budgetMs = 
   return { ok: false, attempts, fatal };
 }
 
-module.exports = { pickModels, complete };
+module.exports = { pickModels, complete, orKey, hasAnyKey };
