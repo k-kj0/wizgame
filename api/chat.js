@@ -18,6 +18,18 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'No messages provided.' });
   }
 
+  // The page pings this endpoint on load to show the status badge.
+  // Answer that locally so it doesn't spend a free-model request.
+  if (system === 'Reply READY' && Number(max_tokens) <= 5) {
+    return res.status(200).json({
+      text: 'READY',
+      content: [{ type: 'text', text: 'READY' }],
+      choices: [{ message: { role: 'assistant', content: 'READY' } }],
+      model: 'OpenRouter',
+      reqId,
+    });
+  }
+
   const prompt = [(system || ''), ...messages.map(m => m && m.content)]
     .filter(Boolean)
     .join('\n\n');
