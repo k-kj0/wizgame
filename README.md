@@ -1,66 +1,75 @@
-# 🎮 Roblox AI Game Studio
+# 🎮 WizGame: Roblox AI Game Studio
 
-A full AI-powered game studio pipeline that generates complete Roblox Lua scripts from a single prompt.
-Built with Gemini 1.5 Flash + Grok as dual AI backends, deployed on Vercel (free).
+Generate a starting set of Roblox Lua scripts from a single game idea, review each file, then finish and polish the game in Roblox Studio. WizGame handles the blank-page problem, not the whole game.
 
-## Features
-- 23 AI bots across 7 stages: Ideators → Designers → Coders → Reviewers → Wizard Gate → Testers → Final Files
-- 🎬 **Video Error Analyzer** — screen record your Roblox error, upload it, AI watches and fixes it
-- Wizard approval gate — review every file before accepting
-- Excellent Work button — stops all bots, fires confetti, ships the game
-- Dual AI: Gemini 1.5 Flash (primary, free) + Grok (fallback)
+**Live demo:** https://wizgame-nine.vercel.app
+
+## What it does
+
+- **Prompt-to-scripts pipeline:** a multi-stage prompt workflow (ideation, design, coding, review, testing) turns a game idea into Lua scripts.
+- **Approval gate:** every generated file is shown for review before you accept it.
+- **Lua syntax pre-check:** generated code is parsed server-side (`api/validate-lua.js`) and flagged for syntax errors and deprecated Roblox APIs (`wait`, `spawn`, `delay`).
+- **Video error analyzer:** upload a screen recording of a Roblox Studio error and get a diagnosis and suggested fix (Gemini Vision via `api/analyze-video.js`).
+- **Model fallback:** `api/chat.js` tries several free models through OpenRouter in order and logs each attempt.
+
+## Results
+
+Measured with `npm run bench` against the deployed app.
+
+| Metric | Result |
+|---|---|
+| Test prompts | 5 |
+| Prompts where all scripts parse | _fill in_ / 5 |
+| Average generation time | _fill in_ s |
+
+## Limitations (honest version)
+
+- The syntax check uses a plain-Lua parser. It catches syntax errors but does **not** prove a script runs correctly in Roblox Studio, and Luau-only syntax (type annotations, `continue`) can be flagged as false errors.
+- Generated scripts usually still need manual fixes and game-specific polish.
+- Free models can be rate-limited or inconsistent.
+- The video analyzer has not been tested across a wide range of Studio errors.
 
 ## Setup
 
-### 1. Get free API keys
-- **Gemini** (recommended, free): https://aistudio.google.com/app/apikey
-- **Grok** (optional fallback): https://console.x.ai/
-
-### 2. Clone & configure
+1. Get API keys: [OpenRouter](https://openrouter.ai/keys) and [Gemini](https://aistudio.google.com/app/apikey).
+2. Clone and configure:
 ```bash
-git clone https://github.com/YOUR_USERNAME/roblox-ai-studio
-cd roblox-ai-studio
-cp .env.example .env
-# Edit .env and add your real API keys
+   git clone https://github.com/k-kj0/wizgame.git
+   cd wizgame
+   cp env.example .env
+   # edit .env and add your keys
 ```
-
-### 3. Deploy to Vercel (free)
-1. Push to GitHub (keys stay in .env, which is gitignored)
-2. Go to vercel.com → New Project → Import repo
-3. Under **Environment Variables**, add:
-   - `GEMINI_API_KEY` = your Gemini key
-   - `GROK_API_KEY` = your Grok key (optional)
-4. Deploy → done
-
-### 4. Local development
+3. Deploy to Vercel: import the repo and add `OPENROUTER_API_KEY`, `GEMINI_API_KEY` and `ALLOWED_ORIGINS` under Environment Variables.
+4. Run locally:
 ```bash
-npm install
-npm run dev
-# Opens at http://localhost:3000
+   npm install
+   npm run dev
 ```
 
 ## Project structure
+
 ```
-roblox-ai-studio/
+wizgame/
 ├── api/
-│   ├── chat.js           # Dual AI proxy (Gemini + Grok)
-│   └── analyze-video.js  # Gemini Vision video analyzer
-├── public/
-│   └── index.html        # Full frontend app
-├── .env.example          # Key template (safe to commit)
-├── .gitignore            # Keeps .env out of git
-├── vercel.json           # Routing config
-└── package.json
+│   ├── _lib/security.js    # CORS allow-list, rate limiting, method checks
+│   ├── chat.js             # LLM proxy with model fallback, timeouts, logging
+│   ├── analyze-video.js    # Gemini Vision screen-recording analyzer
+│   └── validate-lua.js     # Lua syntax check + Roblox API warnings
+├── scripts/
+│   └── benchmark.js        # runs test prompts and records parse results
+├── index.html              # frontend app
+├── validator-ui.js         # shows validation results in the UI
+├── env.example
+├── package.json
+└── vercel.json
 ```
 
 ## How to use
-1. Type a game idea → click Generate Game
-2. Watch 23 bots work through 7 stages
-3. Wizard shows every file before you approve
-4. Testers rate the game — approve or request changes
-5. Click "Excellent Work" to stop all bots
-6. Copy scripts → paste into Roblox Studio
-7. If you get an error in Studio → screen record it → Video Analyzer tab → upload → AI fixes it
 
-## ⚠️ Never commit your .env file
-The `.gitignore` already blocks it. Always add keys via Vercel's Environment Variables panel.
+1. Type a game idea and click Generate.
+2. Review each generated file at the approval gate.
+3. Check the validation badge on each file.
+4. Copy the scripts into Roblox Studio.
+5. If Studio shows an error, screen-record it and upload it in the Video Analyzer tab.
+
+> Never commit your `.env` file. Add keys only through Vercel's Environment Variables panel.
