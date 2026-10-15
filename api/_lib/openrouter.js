@@ -5,11 +5,14 @@ const TTL_MS = 10 * 60 * 1000;
 const BAD_MODEL_MS = 30 * 60 * 1000;
 const DAILY_BLOCK_MS = 30 * 60 * 1000;
 const MINUTE_COOLDOWN_MS = 60 * 1000;
+const MAX_RETRY_WAIT_S = 8;
 
 let modelCache = { at: 0, data: [] };
 let groqCache = { at: 0, data: [] };
 const badModels = new Map();   // model id -> time until which we skip it
 let orBlockedUntil = 0;        // set when OpenRouter's daily free limit is hit
+
+const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 // ---------- keys ----------
 // Keys are sorted by their format first (gsk_ = Groq, xai- = xAI, sk-or- = OpenRouter),
@@ -86,7 +89,12 @@ async function callOnce({ url, key, model, messages, maxTokens, headers, timeout
     });
     const bodyText = await r.text();
     if (!r.ok) {
-      return { ok: false, status: r.status, bodyText, detail: bodyText.replace(/\s+/g, ' ').slice(0, 140) };
+      const ra = parseFloat(r.headers.get('retry-after'));
+      return {
+        ok: false, status: r.status, bodyText,
+        retryAfter: Number.isFinite(ra) ? ra : null,
+        detail: bodyText.replace(/\s+/g, ' ').slice(0, 140),
+      };
     }
     let data;
     try { data = JSON.parse(bodyText); }
@@ -224,22 +232,33 @@ async function complete({ key, models, messages, maxTokens, siteUrl, budgetMs = 
     }
   }
 
-  // 2) Groq
+  // 2) Groq (waits and retries once on a short per-minute rate limit)
   const gk = groqKey();
   if (gk && process.env.USE_GROQ !== 'false') {
     const vision = hasImages(messages);
     const gModels = await groqModels(gk, vision);
-    if (!gModels.length) extra.push('groq -> no usable models available right now');
+    if (!gModels.length) extra.push('groq -> no usable models available right now (check the Groq key)');
     for (const model of gModels) {
       if (Date.now() - started > budgetMs + 15000) { extra.push('groq stopped: time budget used up'); break; }
-      const r = await callOnce({
-        url: `${GROQ_API}/chat/completions`,
-        key: gk, model,
-        messages: vision ? limitImages(messages, 5) : messages,
-        maxTokens,
-        timeoutMs: perModelMs,
-      });
-      if (r.ok) return { ok: true, text: r.text, model: r.model, attempts };
+
+      let r = null;
+      for (let attempt = 0; attempt < 2; attempt++) {
+        r = await callOnce({
+          url: `${GROQ_API}/chat/completions`,
+          key: gk, model,
+          messages: vision ? limitImages(messages, 5) : messages,
+          maxTokens,
+          timeoutMs: perModelMs,
+        });
+        if (r.ok) return { ok: true, text: r.text, model: r.model, attempts };
+
+        const perMinute429 = r.status === 429 && !/per day|TPD|RPD/i.test(r.bodyText);
+        if (perMinute429 && attempt === 0 && r.retryAfter && r.retryAfter <= MAX_RETRY_WAIT_S) {
+          await sleep(r.retryAfter * 1000 + 250);
+          continue;
+        }
+        break;
+      }
 
       const line = `groq/${model} -> HTTP ${r.status} ${r.detail}`;
       attempts.push(line);
