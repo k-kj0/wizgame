@@ -1,53 +1,60 @@
-module.exports = async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
-  if (req.method === "OPTIONS") return res.status(200).end();
-  if (req.method !== "POST") return res.status(405).json({ error: "Method not allowed" });
+const { guard } = require('./_lib/security');
+const { pickModels, complete } = require('./_lib/openrouter');
 
-  const geminiKey = process.env.GEMINI_API_KEY;
-  if (!geminiKey) {
-    return res.status(500).json({ error: "GEMINI_API_KEY not set in Vercel Environment Variables." });
+const MAX_FRAMES = 8;
+const MAX_FRAME_CHARS = 600000;
+
+module.exports = async function handler(req, res) {
+  if (guard(req, res, 20)) return;
+
+  const reqId = Math.random().toString(36).slice(2, 8);
+  const key = process.env.OPENROUTER_API_KEY;
+  if (!key) {
+    return res.status(500).json({ error: 'OPENROUTER_API_KEY not set in Vercel Environment Variables.' });
   }
 
   const { frames, context } = req.body || {};
-  if (!frames || frames.length === 0) {
-    return res.status(400).json({ error: "No frames provided." });
+  if (!Array.isArray(frames) || frames.length === 0) {
+    return res.status(400).json({ error: 'No frames provided.' });
+  }
+  const frameSlice = frames.slice(0, MAX_FRAMES);
+  if (frameSlice.some(f => typeof f !== 'string' || f.length > MAX_FRAME_CHARS)) {
+    return res.status(400).json({ error: 'Invalid or oversized frame.' });
   }
 
-  const parts = [{
-    text: "You are an expert Roblox Studio debugger. Analyze this screen recording.\n\nUser context: " +
-          (context || "None provided.") +
-          "\n\nRespond with these sections:\n\nWHAT I SEE:\n(frame by frame description)\n\nTHE PROBLEM:\n(exact error identified)\n\nROOT CAUSE:\n(why it happens)\n\nFIX STEPS:\n1.\n2.\n3.\n\nPREVENTION:\n(how to avoid next time)"
-  }];
+  const instructions =
+    'You are an expert Roblox Studio debugger. Analyze this screen recording, shown as ' +
+    frameSlice.length + ' frames in order.\n\n' +
+    'User context: ' + ((typeof context === 'string' && context.trim()) || 'None provided.') + '\n\n' +
+    'Respond with these sections:\n' +
+    'WHAT I SEE:\n(frame by frame description)\n\n' +
+    'THE PROBLEM:\n(exact error identified; say clearly if you cannot read the error text)\n\n' +
+    'ROOT CAUSE:\n(why it happens)\n\n' +
+    'THE FIX:\n(step-by-step, with corrected Lua code)\n\n' +
+    'HOW TO PREVENT IT:\n(short tips)';
 
-  const frameSlice = frames.slice(0, 8);
-  frameSlice.forEach(function(f, i) {
-    parts.push({ text: "Frame " + (i + 1) + ":" });
-    parts.push({ inline_data: { mime_type: "image/jpeg", data: f } });
+  const content = [{ type: 'text', text: instructions }];
+  frameSlice.forEach(f => {
+    content.push({ type: 'image_url', image_url: { url: 'data:image/jpeg;base64,' + f } });
   });
 
-  try {
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + geminiKey,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ role: "user", parts }],
-          generationConfig: { maxOutputTokens: 2000, temperature: 0.3 }
-        })
-      }
-    );
-    const data = await response.json();
-    const text = data && data.candidates && data.candidates[0] &&
-                 data.candidates[0].content && data.candidates[0].content.parts &&
-                 data.candidates[0].content.parts[0] && data.candidates[0].content.parts[0].text;
-    if (!text) {
-      return res.status(500).json({ error: "Gemini Vision returned no result: " + JSON.stringify(data).substring(0, 200) });
-    }
-    return res.status(200).json({ analysis: text });
-  } catch (e) {
-    return res.status(500).json({ error: "Video analysis failed: " + e.message });
+  const models = await pickModels(key, { vision: true });
+  const result = await complete({
+    key,
+    models,
+    messages: [{ role: 'user', content }],
+    maxTokens: 1500,
+    siteUrl: process.env.SITE_URL || `https://${req.headers.host}`,
+  });
+
+  console.log(JSON.stringify({ reqId, route: 'analyze-video', ok: result.ok, model: result.model, attempts: result.attempts }));
+
+  if (result.ok) {
+    return res.status(200).json({ analysis: result.text, model: result.model, reqId });
   }
+
+  return res.status(502).json({
+    error: result.fatal || ('Video analysis failed. ' + (result.attempts.length ? result.attempts.join(' | ') : 'No vision-capable free models available right now.')),
+    reqId,
+  });
 };
