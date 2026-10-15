@@ -1,5 +1,5 @@
 const { guard } = require('./_lib/security');
-const { pickModels, complete } = require('./_lib/openrouter');
+const { pickModels, complete, orKey, hasAnyKey } = require('./_lib/openrouter');
 
 const MAX_PROMPT_CHARS = 60000;
 const MAX_TOKENS_CAP = 8000;
@@ -9,23 +9,24 @@ module.exports = async function handler(req, res) {
 
   const reqId = Math.random().toString(36).slice(2, 8);
   const { system, messages, max_tokens } = req.body || {};
-  const key = process.env.OPENROUTER_API_KEY;
 
-  if (!key) {
-    return res.status(500).json({ error: 'OPENROUTER_API_KEY not set in Vercel Environment Variables.' });
+  if (!hasAnyKey()) {
+    return res.status(500).json({
+      error: 'No API key found in this deployment. Add OPENROUTER_API_KEY (or GROQ_API_KEY) in Vercel, tick Production AND Preview, then Redeploy. Open /api/health on this site to see which variables this deployment can see.',
+    });
   }
   if (!Array.isArray(messages) || messages.length === 0) {
     return res.status(400).json({ error: 'No messages provided.' });
   }
 
   // The page pings this endpoint on load to show the status badge.
-  // Answer that locally so it doesn't spend a free-model request.
+  // Answer that locally so it doesn't spend a model request.
   if (system === 'Reply READY' && Number(max_tokens) <= 5) {
     return res.status(200).json({
       text: 'READY',
       content: [{ type: 'text', text: 'READY' }],
       choices: [{ message: { role: 'assistant', content: 'READY' } }],
-      model: 'OpenRouter',
+      model: 'AI ready',
       reqId,
     });
   }
@@ -39,6 +40,7 @@ module.exports = async function handler(req, res) {
   }
 
   const tokens = Math.min(Number(max_tokens) || 2000, MAX_TOKENS_CAP);
+  const key = orKey();
   const models = await pickModels(key);
   const result = await complete({
     key,
