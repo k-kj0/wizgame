@@ -1,6 +1,8 @@
 const API = 'https://openrouter.ai/api/v1';
 const TTL_MS = 10 * 60 * 1000;
+const BAD_MODEL_MS = 30 * 60 * 1000;
 let modelCache = { at: 0, data: [] };
+const badModels = new Map(); // model id -> time until which we skip it
 
 // Fetch the live model list from OpenRouter (cached) instead of hardcoding IDs that get retired.
 async function loadModels(key) {
@@ -27,6 +29,13 @@ function isFreeTextModel(m) {
     && !m.id.startsWith('openrouter/');
 }
 
+function isBad(id) {
+  const until = badModels.get(id);
+  if (!until) return false;
+  if (Date.now() > until) { badModels.delete(id); return false; }
+  return true;
+}
+
 // Returns an ordered list of model IDs to try.
 // Optional Vercel env overrides: FREE_MODELS (chat) and VISION_MODELS (video), comma-separated.
 async function pickModels(key, { vision = false, max = 5 } = {}) {
@@ -38,7 +47,9 @@ async function pickModels(key, { vision = false, max = 5 } = {}) {
     .filter(m => !vision || ((m.architecture && m.architecture.input_modalities) || []).includes('image'))
     .sort((a, b) => (b.context_length || 0) - (a.context_length || 0))
     .map(m => m.id);
-  return [...new Set([...pinned, 'openrouter/free', ...live])].slice(0, max);
+  return [...new Set([...pinned, 'openrouter/free', ...live])]
+    .filter(id => !isBad(id))
+    .slice(0, max);
 }
 
 function contentToText(content) {
@@ -47,7 +58,13 @@ function contentToText(content) {
   return '';
 }
 
-// Tries each model in order. Only a 401 (bad key) stops early; everything else moves to the next model.
+const DAILY_LIMIT_MSG =
+  'Daily free-model limit reached on your OpenRouter account. It resets daily. ' +
+  'To lift it now, add $10 in credits at openrouter.ai/settings/credits ' +
+  '(free models stay free, and the limit rises to 1000 requests per day).';
+
+// Tries each model in order.
+// Stops early on a bad key (401) or on the account-wide daily free limit; otherwise moves to the next model.
 async function complete({ key, models, messages, maxTokens, siteUrl, budgetMs = 45000, perModelMs = 20000 }) {
   const attempts = [];
   const started = Date.now();
@@ -68,14 +85,22 @@ async function complete({ key, models, messages, maxTokens, siteUrl, budgetMs = 
       });
 
       if (!r.ok) {
-        let detail = '';
-        try { detail = (await r.text()).replace(/\s+/g, ' ').slice(0, 140); } catch (e) {}
+        let bodyText = '';
+        try { bodyText = await r.text(); } catch (e) {}
+        const detail = bodyText.replace(/\s+/g, ' ').slice(0, 140);
         attempts.push(`${model} -> HTTP ${r.status} ${detail}`);
+
         if (r.status === 401) {
           return {
             ok: false, attempts,
             fatal: 'OpenRouter rejected the API key (HTTP 401). Create a new key at openrouter.ai/keys, update OPENROUTER_API_KEY in Vercel, then redeploy.',
           };
+        }
+        if (r.status === 429 && /free-models-per-day/i.test(bodyText)) {
+          return { ok: false, attempts, fatal: DAILY_LIMIT_MSG };
+        }
+        if (r.status === 403 || r.status === 404) {
+          badModels.set(model, Date.now() + BAD_MODEL_MS);
         }
         continue;
       }
