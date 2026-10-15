@@ -84,7 +84,7 @@ body{min-height:100vh}
 .wt{font-size:.88rem;font-weight:600;color:#fff;margin-bottom:6px}
 .ws{font-size:.79rem;color:var(--text2);line-height:1.6;margin-bottom:11px;white-space:pre-wrap}
 .fc{border:1px solid var(--border);border-radius:8px;margin-bottom:7px;overflow:hidden}
-.fch{display:flex;justify-content:space-between;align-items:center;padding:7px 11px;background:var(--bg);font-size:.74rem;font-weight:600}
+.fch{display:flex;justify-content:space-between;align-items:center;padding:7px 11px;background:var(--bg);font-size:.74rem;font-weight:600;gap:10px}
 .fch .fp{color:var(--blue);font-family:var(--mono)}
 .fcb{padding:9px 11px;font-size:.7rem;font-family:var(--mono);line-height:1.7;background:var(--bg3);color:var(--text2);white-space:pre-wrap;max-height:120px;overflow-y:auto}
 .fbrow{display:flex;gap:8px;margin-top:9px}
@@ -140,7 +140,7 @@ body{min-height:100vh}
 <div class="page active" id="page-studio">
   <div style="margin-bottom:1.4rem">
     <div class="page-title">Game Studio Pipeline</div>
-    <div class="page-sub">Describe your game — 23 AI bots across 7 stages generate complete Roblox Lua scripts</div>
+    <div class="page-sub">Describe your game — 23 AI bots across 7 stages generate Roblox Lua scripts, then a parser checks and auto-fixes syntax errors</div>
   </div>
   <div class="card" style="margin-bottom:1.4rem">
     <div style="display:flex;gap:10px;align-items:center">
@@ -192,7 +192,7 @@ body{min-height:100vh}
     <!-- Reviewers -->
     <div class="stage" id="stg-reviewers">
       <div class="sh" onclick="tog('reviewers')"><span class="si">🔍</span>
-        <div style="flex:1"><span class="st">Reviewers</span> <span class="ss">— 3 bots · syntax + logic</span></div>
+        <div style="flex:1"><span class="st">Reviewers</span> <span class="ss">— 3 bots + Lua parser · syntax + logic</span></div>
         <span class="sbadge idle" id="badge-reviewers">Idle</span><span class="chev" id="chev-reviewers">▼</span>
       </div>
       <div class="sb" id="sb-reviewers">
@@ -263,7 +263,7 @@ body{min-height:100vh}
           ondrop="handleDrop(event)">
           <div class="dicon" id="dicon">🎬</div>
           <div class="dtitle" id="dtitle">Drop video or click to upload</div>
-          <div class="dsub">MP4, MOV, WebM · max 200MB<br><span>click to browse files</span></div>
+          <div class="dsub" id="dsub">MP4, MOV, WebM · max 200MB<br><span>click to browse files</span></div>
         </div>
         <input type="file" id="vfile" accept="video/*" style="display:none" onchange="handleVid(this.files[0])"/>
         <div id="fsection" style="display:none;margin-top:9px">
@@ -319,7 +319,8 @@ body{min-height:100vh}
 <script>
 const BACKEND = "/api/chat";
 const VA_BACKEND = "/api/analyze-video";
-let G = {prompt:"",gamePlan:"",designOut:"",codeFiles:{},reviewReport:"",stopped:false};
+const VALIDATE_BACKEND = "/api/validate-lua";
+let G = {prompt:"",gamePlan:"",designOut:"",codeFiles:{},reviewReport:"",stopped:false,validation:null,fixed:{}};
 let _activeTab=0, _frames=[], _lastAnalysis="";
 
 // ── detect AI ──
@@ -333,9 +334,15 @@ let _activeTab=0, _frames=[], _lastAnalysis="";
       document.getElementById("aiDot").style.background="var(--red)";
       document.getElementById("aiDot").style.animation="none"; return;
     }
+    if(!r.ok){
+      document.getElementById("aiLabel").textContent="AI offline — check keys";
+      document.getElementById("aiDot").style.background="var(--red)";
+      document.getElementById("aiDot").style.animation="none"; return;
+    }
     const model=(d.model||"");
-    document.getElementById("aiLabel").textContent=model.includes("gemini")?"Gemini 1.5 Flash ✓":model.includes("grok")?"Grok Beta ✓":"AI Ready ✓";
-    document.getElementById("aiDot").style.background=model.includes("gemini")?"var(--blue)":model.includes("grok")?"var(--pink)":"var(--green)";
+    const shortName=model?model.split("/").pop().replace(":free",""):"";
+    document.getElementById("aiLabel").textContent=shortName?shortName+" ✓":"AI Ready ✓";
+    document.getElementById("aiDot").style.background=model.includes("gemini")?"var(--blue)":"var(--green)";
   }catch(e){
     document.getElementById("aiLabel").textContent="Cannot reach server";
     document.getElementById("aiDot").style.background="var(--red)";
@@ -365,6 +372,19 @@ function doneS(id){
   document.getElementById("stg-"+id).classList.add("done");
 }
 function bdg(id,t,c){const b=document.getElementById("badge-"+id);b.textContent=t;b.className="sbadge "+c;}
+function resetStages(){
+  ["ideators","designers","coders","reviewers","wizard","testers","final"].forEach(id=>{
+    const s=document.getElementById("stg-"+id);
+    s.classList.remove("active","done");
+    bdg(id,"Idle","idle");
+  });
+  document.getElementById("tact").style.display="none";
+  document.getElementById("tFBArea").style.display="none";
+  document.getElementById("wiz-content").textContent="Waiting...";
+  document.getElementById("fin-content").textContent="Approved files appear here...";
+  document.getElementById("out-testers").textContent="Awaiting approval...";
+  document.getElementById("tg-testers").innerHTML="";
+}
 function mkBots(cid,bots){
   const c=document.getElementById(cid);c.innerHTML="";
   bots.forEach(b=>{
@@ -384,6 +404,61 @@ function bst(id,text,thinking,done){
 function showErr(m){const e=document.getElementById("errBox");e.textContent="⚠ "+m;e.style.display="block";}
 function hideErr(){document.getElementById("errBox").style.display="none";}
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+
+// ── Lua validation (calls /api/validate-lua) ──
+function filesList(){
+  return Object.entries(G.codeFiles).map(([p,c])=>({name:p,source:c}));
+}
+async function validateFiles(files){
+  try{
+    const r=await fetch(VALIDATE_BACKEND,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({files})});
+    const d=await r.json();
+    if(!r.ok||!d.results)return null;
+    return d.results;
+  }catch(e){
+    console.error("validation failed",e);
+    return null;
+  }
+}
+// Parse every file; for files that fail, ask the model to fix once using the parser error, then re-check.
+async function validateAndFix(){
+  G.fixed={};
+  let results=await validateFiles(filesList());
+  if(!results){G.validation=null;return;}
+  const bad=results.filter(r=>!r.syntaxOk);
+  if(bad.length){
+    await Promise.all(bad.map(async b=>{
+      if(G.stopped)return;
+      try{
+        const fixed=await ai(
+          "Expert Roblox Lua scripter. Fix the syntax error in this script. Use plain Lua syntax only (no type annotations, no continue). Output ONLY the full corrected Lua code, no markdown.",
+          `Parser error: ${b.error}\n\nCode:\n${G.codeFiles[b.name]}`,1200);
+        G.codeFiles[b.name]=fixed.replace(/```lua|```/gi,"").trim();
+        G.fixed[b.name]=true;
+      }catch(e){/* keep original if the fix call fails */}
+    }));
+    results=(await validateFiles(filesList()))||results;
+  }
+  G.validation={};
+  results.forEach(r=>{G.validation[r.name]=r;});
+}
+function parserSummary(){
+  if(!G.validation)return "Parser check unavailable (could not reach /api/validate-lua).";
+  return Object.values(G.validation).map(r=>{
+    let line=(r.syntaxOk?"✓ ":"✗ ")+r.name;
+    if(G.fixed[r.name])line+=" (auto-fixed once)";
+    if(!r.syntaxOk)line+=" — "+r.error;
+    if(r.warnings&&r.warnings.length)line+="\n    ⚠ "+r.warnings.join("; ");
+    return line;
+  }).join("\n");
+}
+function badgeText(p){
+  const r=G.validation&&G.validation[p];
+  if(!r)return "";
+  if(!r.syntaxOk)return "❌ syntax: "+r.error;
+  const prefix=G.fixed[p]?"🔧 auto-fixed · ":"";
+  return prefix+(r.warnings&&r.warnings.length?"⚠️ "+r.warnings.length+" warning(s)":"✅ parses");
+}
 
 // ── safe AI call ──
 async function ai(system,user,max){
@@ -413,8 +488,9 @@ async function ai(system,user,max){
 async function startPipeline(){
   const p=document.getElementById("gamePrompt").value.trim();
   if(!p)return;
-  G={prompt:p,gamePlan:"",designOut:"",codeFiles:{},reviewReport:"",stopped:false};
+  G={prompt:p,gamePlan:"",designOut:"",codeFiles:{},reviewReport:"",stopped:false,validation:null,fixed:{}};
   hideErr();
+  resetStages();
   document.getElementById("startBtn").disabled=true;
   document.getElementById("startBtn").textContent="Running...";
   document.getElementById("succBanner").style.display="none";
@@ -457,7 +533,7 @@ async function s1(){
       <span class="tag ${tc}">${a.diff}</span>
       <div style="font-size:.67rem;color:var(--text3);margin-top:4px">🛠 Ease ${a.ease}% · 🔥 Complexity ${a.cx}%</div>
       <div style="font-size:.67rem;margin-top:3px"><span style="color:var(--green)">✓ ${a.pros}</span> &nbsp; <span style="color:var(--red)">✗ ${a.cons}</span></div>
-      <div style="font-size:.63rem;color:var(--text3);margin-top:5px;font-style:italic;border-top:1px solid var(--border);padding-top:4px">🎨 Image prompt: "Roblox ${G.prompt}, ${a.role}, low-poly 3D, colorful, bird-eye view"</div>`;
+      <div style="font-size:.63rem;color:var(--text3);margin-top:5px;font-style:italic;border-top:1px solid var(--border);padding-top:4px">🎨 Image prompt: "Roblox ${esc(G.prompt)}, ${a.role}, low-poly 3D, colorful, bird-eye view"</div>`;
     document.getElementById("cg-ideators").appendChild(card);
     return `[${bot.name}]: ${res.trim()}`;
   }));
@@ -515,7 +591,7 @@ async function s3(){
   await Promise.all(bots.map(async(bot,i)=>{
     bst(bot.id,"Writing Lua...",true);
     const sc=scripts[i];
-    const code=await ai(`Expert Roblox Lua scripter. Write COMPLETE RUNNABLE Lua. Use proper Roblox APIs with comments. Location: ${sc.path}. Output ONLY Lua code, no markdown.`,`Plan:\n${G.gamePlan.substring(0,480)}\nDesign:\n${G.designOut.substring(0,380)}\nFile: ${sc.path}\nJob: ${sc.desc}`,1200);
+    const code=await ai(`Expert Roblox Lua scripter. Write COMPLETE RUNNABLE Lua. Use proper Roblox APIs with comments. Use plain Lua syntax only: no type annotations, no continue, use task.wait/task.spawn instead of wait/spawn, and game:GetService() for services. Location: ${sc.path}. Output ONLY Lua code, no markdown.`,`Plan:\n${G.gamePlan.substring(0,480)}\nDesign:\n${G.designOut.substring(0,380)}\nFile: ${sc.path}\nJob: ${sc.desc}`,1200);
     bst(bot.id,"✓ Done",false,true);
     G.codeFiles[sc.path]=code.replace(/```lua|```/gi,"").trim();
     const cur=document.getElementById("out-coders");
@@ -524,7 +600,7 @@ async function s3(){
   bdg("coders","✓ Done","done-b");doneS("coders");
 }
 
-// S4 — Reviewers
+// S4 — Reviewers (parser check + auto-fix, then AI reviewers)
 async function s4(){
   openS("reviewers");bdg("reviewers","Running...","run");
   const bots=[
@@ -533,8 +609,11 @@ async function s4(){
     {id:"r3",name:"LogicBot",ini:"LG",col:"#22d3a0"},
   ];
   mkBots("bg-reviewers",bots);
-  document.getElementById("out-reviewers").textContent="⟳ Reviewing...";
+  document.getElementById("out-reviewers").textContent="⟳ Parsing Lua, fixing syntax errors...";
+  bst("r1","Parsing Lua...",true);
+  await validateAndFix();
   const allCode=Object.entries(G.codeFiles).map(([p,c])=>`-- ${p}\n${c}`).join("\n---\n").substring(0,3000);
+  document.getElementById("out-reviewers").textContent="Parser check:\n"+parserSummary()+"\n\n⟳ Reviewing...";
   bots.forEach(b=>bst(b.id,"Reviewing...",true));
   const [r1,r2,r3]=await Promise.all([
     ai("SyntaxBot: Check Lua syntax errors, undefined vars, bad API calls. List each issue with file and fix.",`Code:\n${allCode}`,360),
@@ -542,7 +621,7 @@ async function s4(){
     ai("LogicBot: Check gameplay logic — does the loop work? Win/lose trigger? AI chase? List gaps.",`Plan:\n${G.gamePlan.substring(0,280)}\nCode:\n${allCode.substring(0,1800)}`,360),
   ]);
   bots.forEach(b=>bst(b.id,"✓ Done",false,true));
-  G.reviewReport=`SyntaxBot:\n${r1.trim()}\n\nPlacementBot:\n${r2.trim()}\n\nLogicBot:\n${r3.trim()}`;
+  G.reviewReport=`Parser check (luaparse):\n${parserSummary()}\n\nSyntaxBot:\n${r1.trim()}\n\nPlacementBot:\n${r2.trim()}\n\nLogicBot:\n${r3.trim()}`;
   document.getElementById("out-reviewers").textContent=G.reviewReport;
   bdg("reviewers","✓ Done","done-b");doneS("reviewers");
 }
@@ -558,7 +637,7 @@ async function s5(){
       <div class="ws">${esc(summary)}</div>
       ${Object.entries(G.codeFiles).map(([p,c])=>`
         <div class="fc">
-          <div class="fch"><span class="fp">📄 ${p}.lua</span><span style="color:var(--text3)">${c.split("\n").length} lines</span></div>
+          <div class="fch"><span class="fp">📄 ${esc(p)}.lua</span><span style="color:var(--text3);text-align:right">${esc(badgeText(p))}${badgeText(p)?" · ":""}${c.split("\n").length} lines</span></div>
           <div class="fcb">${esc(c.substring(0,280))}${c.length>280?"\n-- ... full code in Final Files":""}</div>
         </div>`).join("")}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:11px">
@@ -594,20 +673,24 @@ async function runTesters(){
   });
   document.getElementById("out-testers").textContent="⟳ Analyzing code...";
   const sample=Object.entries(G.codeFiles).map(([p,c])=>`--${p}\n${c.substring(0,260)}`).join("\n---\n").substring(0,1300);
-  const reports=await Promise.all(defs.map(async t=>{
-    const res=await ai(`You are ${t.name}, Roblox tester for ${t.focus}. FIRST LINE must be "Score: X/10". Then 2 sentences specific feedback and one suggestion.`,`Game: "${G.prompt}"\nPlan:\n${G.gamePlan.substring(0,260)}\nCode:\n${sample}`,210);
-    const m=res.match(/Score:\s*(\d+)/i);
-    const score=m?parseInt(m[1]):7;
-    const fb=res.replace(/Score:\s*\d+\/10\s*/i,"").trim().substring(0,120);
-    const el=document.getElementById("ts-"+t.id);
-    el.textContent=score+"/10";
-    el.className="tsc"+(score>=8?"":(score>=5?" mid":" low"));
-    document.getElementById("tf-"+t.id).textContent=fb;
-    return `[${t.name}] ${score}/10 — ${fb}`;
-  }));
-  document.getElementById("out-testers").textContent=reports.join("\n\n");
-  bdg("testers","✓ Your review needed","wait");
-  document.getElementById("tact").style.display="block";
+  try{
+    const reports=await Promise.all(defs.map(async t=>{
+      const res=await ai(`You are ${t.name}, Roblox tester for ${t.focus}. FIRST LINE must be "Score: X/10". Then 2 sentences specific feedback and one suggestion.`,`Game: "${G.prompt}"\nPlan:\n${G.gamePlan.substring(0,260)}\nCode:\n${sample}`,210);
+      const m=res.match(/Score:\s*(\d+)/i);
+      const score=m?parseInt(m[1]):7;
+      const fb=res.replace(/Score:\s*\d+\/10\s*/i,"").trim().substring(0,120);
+      const el=document.getElementById("ts-"+t.id);
+      el.textContent=score+"/10";
+      el.className="tsc"+(score>=8?"":(score>=5?" mid":" low"));
+      document.getElementById("tf-"+t.id).textContent=fb;
+      return `[${t.name}] ${score}/10 — ${fb}`;
+    }));
+    document.getElementById("out-testers").textContent=reports.join("\n\n");
+    bdg("testers","✓ Your review needed","wait");
+    document.getElementById("tact").style.display="block";
+  }catch(e){
+    if(e.message!=="Stopped")showErr(e.message);
+  }
 }
 
 function excellentWork(){
@@ -631,7 +714,8 @@ async function rerun(src){
   const wf=document.getElementById("wzFBInput"),tf=document.getElementById("tFBInput");
   const fb=(src==="w"&&wf?wf.value.trim():tf?tf.value.trim():"")||"";
   if(fb)G.prompt=G.prompt+". Also: "+fb;
-  G.codeFiles={};G.stopped=false;hideErr();
+  G.codeFiles={};G.validation=null;G.fixed={};G.stopped=false;hideErr();
+  resetStages();
   document.getElementById("startBtn").disabled=true;
   try{await s1();await s2();await s3();await s4();await s5();}
   catch(e){
@@ -646,8 +730,8 @@ function renderFinal(){
   const paths=Object.keys(G.codeFiles);
   if(!paths.length){document.getElementById("fin-content").textContent="No files yet.";return;}
   const fc=document.getElementById("fin-content");
-  const tabs=paths.map((p,i)=>`<div class="ftab${i===0?" active":""}" onclick="showTab(${i})">${p.split("/").pop()}</div>`).join("");
-  const panels=paths.map((p,i)=>`<div id="cp-${i}" style="display:${i===0?"block":"none"}"><div style="font-size:.68rem;color:var(--text3);font-family:var(--mono);margin-bottom:6px">📄 ${p}.lua</div><div class="codeout">${esc(G.codeFiles[p])}</div></div>`).join("");
+  const tabs=paths.map((p,i)=>`<div class="ftab${i===0?" active":""}" onclick="showTab(${i})">${esc(p.split("/").pop())}</div>`).join("");
+  const panels=paths.map((p,i)=>`<div id="cp-${i}" style="display:${i===0?"block":"none"}"><div style="font-size:.68rem;color:var(--text3);font-family:var(--mono);margin-bottom:6px">📄 ${esc(p)}.lua${badgeText(p)?" · "+esc(badgeText(p)):""}</div><div class="codeout">${esc(G.codeFiles[p])}</div></div>`).join("");
   fc.innerHTML=`<div class="tabrow">${tabs}</div>${panels}
     <div style="display:flex;gap:7px;flex-wrap:wrap;margin:10px 0">
       <button class="btn btn-outline btn-sm" onclick="copyActive()">📋 Copy current</button>
@@ -713,7 +797,7 @@ function extractFrames(file){
         done++;
         if(done===times.length){
           document.getElementById("dicon").textContent="✅";
-          document.getElementById("dsub") && (document.getElementById("dsub").textContent=done+" frames extracted — ready");
+          document.getElementById("dsub").textContent=done+" frames extracted — ready";
           document.getElementById("fsection").style.display="block";
           document.getElementById("fcount").textContent=done;
           document.getElementById("analyzeBtn").disabled=false;
@@ -751,6 +835,7 @@ async function sendFU(){
   const out=document.getElementById("aout");
   out.textContent+="\n\n── YOUR QUESTION ──\n"+q+"\n\n── AI RESPONSE ──\nThinking...";
   try{
+    G.stopped=false;
     const res=await ai("You are a Roblox Studio expert. Previous analysis: "+_lastAnalysis.substring(0,700)+"\nAnswer the follow-up question specifically.",q,550);
     out.textContent=out.textContent.replace("Thinking...",res);
   }catch(e){out.textContent+="\nError: "+e.message;}
