@@ -35,12 +35,14 @@ input,textarea{background:var(--b3);border:1px solid var(--bd2);border-radius:9p
 pre.out,pre.code{background:var(--b3);border:1px solid var(--bd);border-radius:9px;padding:10px;font:.72rem/1.7 var(--m);color:var(--t2);white-space:pre-wrap;max-height:260px;overflow:auto}pre.code{max-height:380px;background:var(--bg)}
 .ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:.7rem}
 .idc{background:var(--b3);border:1px solid var(--bd);border-radius:11px;padding:11px;font-size:.78rem;color:var(--t2);display:flex;flex-direction:column;gap:6px}.idc b{color:var(--tx);font-size:.86rem}.idc.sel{border-color:#e6b422;box-shadow:0 0 0 1px #e6b422}.idc p{flex:1}
+.myq{width:100%;min-height:60px}
+.qa{border:1px solid var(--bd);border-radius:9px;padding:8px 10px;margin-top:6px;background:var(--b3);font-size:.78rem}.qa b{display:block;color:var(--tx)}.qa span{color:var(--t2)}
 .vd{border:1px solid var(--bd2);border-left:4px solid var(--gr);border-radius:10px;padding:10px 13px;margin-top:.8rem;background:var(--b3)}.vd.FIX{border-left-color:var(--am)}.vd .h{font-weight:700;margin-bottom:6px}.vd.APPROVE .h{color:var(--gr)}.vd.FIX .h{color:var(--am)}
 .vd .c{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;font-size:.78rem;color:var(--t2)}.vd h5{font-size:.66rem;text-transform:uppercase;color:var(--t3)}.vd ul{margin-left:1rem}
-.sc{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:.7rem}.sk{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:.76rem;color:var(--t2)}.sk b{font-size:1.3rem}.sk b.g{color:var(--gr)}.sk b.a{color:var(--am)}.sk b.r{color:var(--rd)}.sk h6{color:var(--tx);font-size:.78rem}
+.sc{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:.7rem}.sk{background:var(--b3);border:2px solid var(--bd);border-radius:10px;padding:10px;font-size:.76rem;color:var(--t2);cursor:pointer}.sk.sel{border-color:var(--ac)}.sk b{font-size:1.3rem}.sk b.g{color:var(--gr)}.sk b.a{color:var(--am)}.sk b.r{color:var(--rd)}.sk h6{color:var(--tx);font-size:.78rem}
 .act{display:flex;gap:8px;flex-wrap:wrap;margin-top:.8rem}
-.cmp{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:.7rem}.cmp td,.cmp th{border-bottom:1px solid var(--bd);padding:6px 8px;text-align:left}.up{color:var(--gr)}.dn{color:var(--rd)}
-.sketch{width:100%;max-width:560px;border:1px solid var(--bd2);border-radius:10px;background:#1b1b26;margin-top:6px}
+.cmp{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:.5rem}.cmp td,.cmp th{border-bottom:1px solid var(--bd);padding:5px 8px;text-align:left}.up{color:var(--gr)}.dn{color:var(--rd)}
+.sketch{width:100%;max-width:640px;border:1px solid var(--bd2);border-radius:10px;background:#1b1b26;margin-top:6px}
 .file{margin-bottom:1rem}.crumb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:.76rem var(--m);margin-bottom:6px;color:var(--bl)}.crumb em{color:var(--t3);font-style:normal}
 .chip{font:600 .66rem var(--f);padding:2px 8px;border-radius:20px;background:rgba(124,106,245,.15);color:var(--ac)}.chip.ok{background:rgba(34,211,160,.15);color:var(--gr)}.chip.bad{background:rgba(240,64,96,.15);color:var(--rd)}.chip.w{background:rgba(245,166,35,.15);color:var(--am)}
 .part{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;margin-bottom:6px;background:var(--b3)}.part b{min-width:170px}.part span{flex:1;color:var(--t2);font-size:.78rem}
@@ -52,7 +54,7 @@ aside .card{position:sticky;top:64px}.step{display:flex;gap:8px;align-items:cent
 <div class="nav"><div class="logo" id="logo"></div><div class="nt on" onclick="pg('studio',this)">Game Studio</div><div class="nt" onclick="pg('video',this)">Video Analyzer</div><div class="ai"><i id="aid"></i><span id="ail">Checking AI...</span></div></div>
 <div class="wrap"><main>
 <div class="page on" id="p-studio">
- <h1>Game Studio</h1><div class="sub">5 ideas, you pick one, it gets challenged and improved, then designed, coded, checked and tested.</div>
+ <h1>Game Studio</h1><div class="sub">5 ideas, you pick one. Level Bot, Questioner and Betterment sharpen it. Then it is designed, coded, tested, and improved until it scores 8/10.</div>
  <div class="card"><div class="row"><input id="gp" style="flex:1;min-width:200px" value="dodge cannon game" placeholder="Describe a game theme, e.g. zombie survival, obby, tycoon"><button class="btn" onclick="go()">Suggest ideas</button></div></div>
  <div class="gtabs" id="gtabs"></div><div id="gview"></div>
 </div>
@@ -70,8 +72,10 @@ aside .card{position:sticky;top:64px}.step{display:flex;gap:8px;align-items:cent
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const TARGET=8,MAXR=4,QROUNDS=2; // target average rating, max fix rounds, question rounds
 const ICONS={
 idea:["..aaaa..",".aawwaa.",".aawaaa.",".aaaaaa.","..aaaa..","...dd...","...dd...","..dddd.."],
+level:["......aa",".....aaa","....aa..","...aa...","..aa....",".aa.....","aaaaaaaa","dddddddd"],
 ask:["..aaaa..",".aa..aa.","....aa..","...aa...","...aa...","........","...aa...","...aa..."],
 better:["...aa...","..aaaa..",".aaaaaa.","aaaaaaaa","...aa...","...aa...","...aa...","...aa..."],
 design:["......aa",".....aaa","....aaa.","...aaa..","..dda...",".dddd...",".ddd....","..d....."],
@@ -84,15 +88,16 @@ ship:["..aaaa..",".aaaaaa.","aaaddaaa","aaaddaaa","aaaddaaa","aaaddaaa",".aaaaaa
 help:[".aaaaaa.","aaaaaaaa","aawaawaa","aaaaaaaa",".aaaaaa.","..aa....",".a......","........"]};
 function px(n,c){let r="";ICONS[n].forEach((row,y)=>[...row].forEach((ch,x)=>{if(ch===".")return;r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${ch==="a"?c:ch==="w"?"#fff":"#3a3a52"}"/>`}));return `<svg class="px" viewBox="0 0 8 8" shape-rendering="crispEdges" style="animation-delay:-${((n.length*.37+c.length*.11)%2).toFixed(1)}s">${r}</svg>`}
 const ST=[
-{id:"idea",ic:"idea",bg:"#fff6c2",col:"#b58900",t:"Ideators",role:"Five bots each pitch a different game idea (about 50 words, plain language). You choose one.",bots:[["ActionBot","Fast action + skill"],["PuzzleBot","Puzzle + strategy"],["CoopBot","Teamwork"],["GrindBot","Progress + collecting"],["PartyBot","Party + rounds"]]},
-{id:"ask",ic:"ask",bg:"#ffc2c2",col:"#d33",t:"Questioner",role:"Challenges your chosen idea: pros, cons and open questions.",bots:[["Questioner","Pros, cons, questions"]]},
-{id:"better",ic:"better",bg:"#e6b422",col:"#7a5c00",t:"Betterment",role:"Improves the chosen idea from the player's point of view, answering the cons.",bots:[["Betterment","Player-first rewrite"]]},
-{id:"design",ic:"design",bg:"#a9d4ff",col:"#2a6fb5",t:"Designers",role:"Decide what to build in Studio and draw a bird's-eye sketch of the arena.",bots:[["MapBot","Parts + layout"],["PlayerBot","Player + rules"],["UIBot","HUD + lighting"],["SketchBot","Bird's-eye image"]]},
+{id:"idea",ic:"idea",bg:"#fff6c2",col:"#b58900",t:"Ideators",role:"Five bots each pitch a different game idea (about 50 words, plain language). You choose one and can add your own questions.",bots:[["ActionBot","Fast action + skill"],["PuzzleBot","Puzzle + strategy"],["CoopBot","Teamwork"],["GrindBot","Progress + collecting"],["PartyBot","Party + rounds"]]},
+{id:"level",ic:"level",bg:"#e4f5b0",col:"#6a8f00",t:"Level Bot",role:"Plans levels and the reasons a player comes back to play again and again.",bots:[["Level Bot","Levels + replay hooks"]]},
+{id:"ask",ic:"ask",bg:"#ffc2c2",col:"#d33",t:"Questioner",role:"Keeps challenging the idea in rounds: pros, cons and sharp questions. Round 2 asks new follow-ups.",bots:[["Questioner","Pros, cons, questions"]]},
+{id:"better",ic:"better",bg:"#e6b422",col:"#7a5c00",t:"Betterment",role:"Answers every question (including yours) from the player's point of view, then rewrites the idea.",bots:[["Betterment","Answers + player-first rewrite"]]},
+{id:"design",ic:"design",bg:"#a9d4ff",col:"#2a6fb5",t:"Designers",role:"Decide what to build in Studio and generate a bird's-eye image of the game.",bots:[["MapBot","Parts + layout"],["PlayerBot","Player + rules"],["UIBot","HUD + lighting"],["SketchBot","Bird's-eye image"]]},
 {id:"code",ic:"code",bg:"#c9bcff",col:"#5b45d6",t:"Coders",role:"Write one Lua script per system, each with its Studio location.",bots:[["GameManager","Rounds + scoring"],["NPCController","Enemy AI"],["PlayerCtrl","Input + effects"],["GUIScript","HUD + timer"],["MapBuilder","Builds the arena"]]},
 {id:"review",ic:"review",bg:"#9cf0d4",col:"#0e8a68",t:"Reviewers",role:"A real Lua parser checks syntax (auto-fixes once), then bots check placement and logic.",bots:[["SyntaxBot","Typos + bad API calls"],["PlacementBot","Server vs client"],["LogicBot","Does the loop work?"]]},
 {id:"wiz",ic:"wizard",bg:"#f1b3ff",col:"#a02fc0",t:"Wizard Gate",role:"Explains every file in plain words. Nothing is tested until you approve.",bots:[["Wizard","Plain-language walkthrough"]]},
-{id:"test",ic:"test",bg:"#ffc08a",col:"#c4601a",t:"Testers",role:"Five testers score fun, bugs, balance, performance and UI clarity.",bots:[["FunBot","Fun"],["BugBot","Edge cases"],["BalanceBot","Fairness"],["PerfBot","Many players"],["UXBot","UI clarity"]]},
-{id:"fix",ic:"fix",bg:"#ffa8b8",col:"#c0304f",t:"Fix Round",role:"After you click Fix issues: the Wizard delegates, Coders rewrite only the needed files, Testers re-score. Everything else stays the same.",bots:[["Wizard","Delegates the fixes"],["Coders","Rewrite those files"],["Testers","Re-score"]]},
+{id:"test",ic:"test",bg:"#ffc08a",col:"#c4601a",t:"Testers",role:"Five testers score the game. Click a rating, then Redo, if you do not trust it.",bots:[["FunBot","Fun"],["BugBot","Edge cases"],["BalanceBot","Fairness"],["PerfBot","Many players"],["UXBot","UI clarity"]]},
+{id:"fix",ic:"fix",bg:"#ffa8b8",col:"#c0304f",t:"Fix Rounds",role:"Repeats until the average reaches 8/10: the Wizard delegates, Coders rewrite only the needed files, Testers re-score. A worse result is reverted.",bots:[["Wizard","Delegates the fixes"],["Coders","Rewrite those files"],["Testers","Re-score"]]},
 {id:"ship",ic:"ship",bg:"#b8f0a8",col:"#2d8a1c",t:"Ship + ProBot",role:"Ship it, and let ProBot list what you could add to make the game better.",bots:[["ProBot","Add-on ideas"]]}];
 const S=id=>ST.find(s=>s.id===id);
 const PARTS=[["Game loop and rounds",/PlayerAdded|round|match/i,"Add a GameManager script: rounds, win/lose, scoring"],["Enemy / NPC bots",/Pathfinding|Humanoid|NPC/i,"Add an NPC controller script for the enemies"],["Player controls",/UserInputService|Activated|Tool/i,"Add a player controller: input and weapon"],["Timer",/timer|countdown|time ?left|os\.clock|tick\(/i,"Add a match timer script with a UI update"],["GUI elements",/ScreenGui|TextLabel|Frame/i,"Add a GUI script: health bar, score and timer"],["Map / arena",/Instance\.new\(["']Part|Terrain|Workspace/i,"Add a MapBuilder script that builds the arena"],["Score / leaderboard",/leaderstats|score/i,"Add a leaderboard / score script"],["Remote events",/RemoteEvent|FireClient|FireServer/i,"Add a Remotes setup script in ReplicatedStorage"]];
@@ -110,14 +115,15 @@ async function ai(sys,user,max,g){
  return d.content.map(b=>b.text||"").join("");
 }
 async function validate(files){try{const r=await fetch("/api/validate-lua",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({files})});const d=await r.json();return r.ok&&d.results?d.results:null}catch(e){return null}}
-const lst=s=>s?s.split(/\n|;/).map(x=>x.replace(/^[\s*\-\d.]+/,"").trim()).filter(x=>x.length>2).slice(0,5):[];
+const lst=(s,n)=>s?s.split(/\n|;/).map(x=>x.replace(/^[\s*\-\d.]+/,"").trim()).filter(x=>x.length>2).slice(0,n||5):[];
 function sect(t,k,next){const m=new RegExp(k+":\\s*([\\s\\S]*?)(?="+next+"|$)","i").exec(t);return m?m[1]:""}
 const code0=t=>t.replace(/```lua|```/gi,"").trim();
 const avg=a=>a.length?(a.reduce((n,x)=>n+x.s,0)/a.length).toFixed(1):"-";
+const clone=o=>JSON.parse(JSON.stringify(o));
 function pg(id,el){document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));document.querySelectorAll(".nt").forEach(t=>t.classList.remove("on"));$("p-"+id).classList.add("on");el.classList.add("on");$("aside").style.display=id==="studio"?"":"none"}
 
-function mk(theme){return{id:Date.now()+Math.random(),theme,name:theme.slice(0,18),tab:"pipe",open:{},stopped:false,running:false,err:"",...blank()}}
-function blank(){return{ideas:[],sel:-1,ask:null,final:"",changes:[],plan:"",design:"",svg:"",files:{},parser:null,fixed:{},scores:[],prev:null,v:{},st:{},bot:{},out:{},up:null,shipped:false}}
+function mk(theme){return{id:Date.now()+Math.random(),theme,name:theme.slice(0,18),tab:"pipe",open:{},stopped:false,running:false,err:"",myq:"",...blank()}}
+function blank(){return{ideas:[],sel:-1,level:null,pros:[],cons:[],qs:[],cur:[],qa:[],changes:[],final:"",plan:"",design:"",svg:"",svgFail:false,imgSrc:"",imgState:"",files:{},parser:null,fixed:{},scores:[],rounds:[],round:0,best:null,rsel:{},lastFail:"",note:"",v:{},st:{},bot:{},out:{},up:null,shipped:false}}
 const setS=(g,id,v)=>{g.st[id]=v;render()};
 const bs=(g,s,n,v)=>{g.bot[s+":"+n]=v;render()};
 function fan(g,sid,fn){return Promise.all(S(sid).bots.map(async(b,i)=>{bs(g,sid,b[0],"work");try{const r=await fn(b,i);bs(g,sid,b[0],"done");return r}catch(e){bs(g,sid,b[0],"err");throw e}}))}
@@ -126,25 +132,50 @@ function sel(id){CUR=GAMES.find(g=>g.id==id);render()}
 function tg(id){const g=CUR,st=g.st[id]||"idle";g.open[id]=!(g.open[id]!==undefined?g.open[id]:(st==="run"||st==="wait"));render()}
 function jump(id){CUR.tab="pipe";CUR.open[id]=true;render();setTimeout(()=>{const e=$("s-"+id);e&&e.scrollIntoView({behavior:"smooth",block:"start"})},50)}
 async function go(){const t=$("gp").value.trim();if(!t)return;const g=mk(t);GAMES.push(g);CUR=g;g.running=true;render();try{await s1(g)}catch(e){fail(g,e)}g.running=false;render()}
-async function pick(i){const g=CUR;if(g.running)return;Object.assign(g,blank(),{ideas:g.ideas,sel:i});g.st.idea="done";g.stopped=false;g.err="";g.running=true;g.open.ask=g.open.better=true;render();
- try{await sAsk(g);await sBetter(g);await s2(g);await s3(g);await s4(g);await s5(g)}catch(e){fail(g,e)}g.running=false;render()}
+async function pick(i){const g=CUR;if(g.running)return;Object.assign(g,blank(),{ideas:g.ideas,sel:i});g.st.idea="done";g.stopped=false;g.err="";g.running=true;g.open.level=g.open.ask=g.open.better=true;render();
+ try{await sLevel(g);for(let r=1;r<=QROUNDS;r++){await sAsk(g,r);await sBetter(g,r)}await s2(g);await s3(g);await s4(g);await s5(g)}catch(e){fail(g,e)}g.running=false;render()}
 
 async function s1(g){setS(g,"idea","run");const A=["fast action and skill","puzzle and strategy","co-op teamwork","progression and collecting","party and competitive rounds"];
  const res=await fan(g,"idea",(b,i)=>ai("You are a Roblox game ideator. Write ONE game idea in simple language, about 50 words. Reply exactly:\nTITLE: 3-5 words\nIDEA: the idea",`Theme: "${g.theme}". Angle: ${A[i]}. Make it different from other angles.`,220,g));
  g.ideas=res.map((t,i)=>({n:S("idea").bots[i][0],title:(/TITLE:\s*(.+)/i.exec(t)||[])[1]||A[i],text:((/IDEA:\s*([\s\S]+)/i.exec(t)||[])[1]||t).trim()}));g.st.idea="wait";g.open.idea=true;render()}
-async function sAsk(g){setS(g,"ask","run");bs(g,"ask","Questioner","work");const it=g.ideas[g.sel];
- const t=await ai("You are the Questioner. Challenge this Roblox game idea like a skeptical player and developer. Reply exactly:\nPROS: item; item; item\nCONS: item; item; item\nQUESTIONS: item; item","Idea: "+it.title+". "+it.text,350,g);
- g.ask={pros:lst(sect(t,"PROS","CONS")),cons:lst(sect(t,"CONS","QUESTIONS")),qs:lst(sect(t,"QUESTIONS","$^"))};bs(g,"ask","Questioner","done");setS(g,"ask","done")}
-async function sBetter(g){setS(g,"better","run");bs(g,"better","Betterment","work");const it=g.ideas[g.sel];
- const t=await ai("You are the Betterment bot. Think from the PLAYER's point of view: what would confuse, bore or frustrate them? Improve the idea by answering the cons and questions. Reply exactly:\nTITLE: name\nIMPROVED IDEA: max 120 words, simple language\nCHANGES: change; change; change",`Idea: ${it.title}. ${it.text}\nCons: ${g.ask.cons.join("; ")}\nQuestions: ${g.ask.qs.join("; ")}`,500,g);
- const fin=sect(t,"IMPROVED IDEA","CHANGES").trim()||it.text;g.final=fin;g.changes=lst(sect(t,"CHANGES","$^"));g.plan=(sect(t,"TITLE","IMPROVED").trim()||it.title)+": "+fin;
- g.out.better=g.plan;bs(g,"better","Betterment","done");setS(g,"better","done")}
+async function sLevel(g){setS(g,"level","run");bs(g,"level","Level Bot","work");const it=g.ideas[g.sel];
+ const t=await ai("You are the Level Bot. Think like a player deciding whether to play this game again tomorrow. Reply exactly:\nLEVELS: level 1 name and twist; level 2; level 3; level 4\nHOOKS: reason to replay; reason; reason; reason\nCOMEBACK: the single strongest reason players return, one sentence","Idea: "+it.title+". "+it.text,450,g);
+ g.level={levels:lst(sect(t,"LEVELS","HOOKS")),hooks:lst(sect(t,"HOOKS","COMEBACK")),why:sect(t,"COMEBACK","$^").trim()};
+ g.plan=it.title+": "+it.text+"\nLevels: "+g.level.levels.join("; ")+"\nReplay hooks: "+g.level.hooks.join("; ");g.base=g.plan;bs(g,"level","Level Bot","done");setS(g,"level","done")}
+async function sAsk(g,r){setS(g,"ask","run");bs(g,"ask","Questioner","work");
+ const t=await ai(r===1?"You are the Questioner. Challenge this Roblox game like a skeptical player and developer. Be tough, especially on replayability and levels. Reply exactly:\nPROS: item; item; item\nCONS: item; item; item\nQUESTIONS: 5 or 6 sharp questions separated by ;":"You are the Questioner, round "+r+". Ask 3 NEW follow-up questions about weaknesses that remain in the improved idea. Do not repeat earlier questions. Reply exactly:\nQUESTIONS: question; question; question","Idea:\n"+g.plan+(r>1?"\nAlready asked: "+g.qs.map(x=>x.q).join(" | "):""),480,g);
+ if(r===1){g.pros=lst(sect(t,"PROS","CONS"));g.cons=lst(sect(t,"CONS","QUESTIONS"))}
+ const qs=lst(sect(t,"QUESTIONS","$^"),8).map(q=>({q,mine:false,r}));
+ if(r===1)(g.myq||"").split("\n").map(s=>s.trim()).filter(s=>s.length>2).forEach(q=>qs.push({q,mine:true,r}));
+ g.cur=qs;g.qs.push(...qs);bs(g,"ask","Questioner","done");setS(g,"ask",r<QROUNDS?"run":"done")}
+async function sBetter(g,r){setS(g,"better","run");bs(g,"better","Betterment","work");
+ const items=g.cur.map((x,i)=>({...x,n:i+1}));
+ const call=(list,sys)=>ai(sys,"Current idea:\n"+g.plan+"\n\n"+list.map(x=>`Q${x.n}${x.mine?" (from the user)":""}: ${x.q}`).join("\n"),1000,g);
+ const get=(t,n)=>{const m=new RegExp("A"+n+":\\s*(.+)").exec(t);return m?m[1].trim():""};
+ const t=await call(items,"You are the Betterment bot. Think from the PLAYER's point of view. Answer EVERY question, one line each, exactly 'A<number>: answer' (max 30 words). Then improve the idea so it fixes every problem the questions raised. Finish with exactly:\nTITLE: name\nIMPROVED IDEA: max 120 words, simple language\nCHANGES: change; change; change");
+ items.forEach(x=>x.a=get(t,x.n));
+ const miss=items.filter(x=>!x.a);
+ if(miss.length){const t2=await call(miss,"Answer EVERY question below, one line each, exactly 'A<number>: answer' (max 30 words).");miss.forEach(x=>x.a=get(t2,x.n))}
+ items.forEach(x=>{if(!x.a)x.a="(no answer returned)"});
+ g.qa.push(...items.map(x=>({q:x.q,a:x.a,mine:x.mine,r})));
+ const fin=sect(t,"IMPROVED IDEA","CHANGES").trim();
+ if(fin){g.final=fin;g.plan=(sect(t,"TITLE","IMPROVED").trim()||"Game")+": "+fin+"\nLevels: "+g.level.levels.join("; ")+"\nReplay hooks: "+g.level.hooks.join("; ")}
+ g.changes=g.changes.concat(lst(sect(t,"CHANGES","$^")));bs(g,"better","Betterment","done");setS(g,"better",r<QROUNDS?"run":"done")}
 
-function cleanSvg(t){let m=/<svg[\s\S]*<\/svg>/i.exec(t);if(!m)return"";let s=m[0].replace(/<script[\s\S]*?<\/script>/gi,"").replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi,"").replace(/\son\w+\s*=\s*("[^"]*"|'[^']*')/gi,"").replace(/(href|xlink:href)\s*=\s*("[^"]*"|'[^']*')/gi,"");if(!/xmlns=/.test(s))s=s.replace("<svg",'<svg xmlns="http://www.w3.org/2000/svg"');return s}
+function cleanSvg(t){const m=/<svg[\s\S]*<\/svg>/i.exec(t);if(!m)return"";let s=m[0].replace(/<script[\s\S]*?<\/script>/gi,"").replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi,"").replace(/\son\w+\s*=\s*("[^"]*"|'[^']*')/gi,"").replace(/(href|xlink:href)\s*=\s*("[^"]*"|'[^']*')/gi,"");if(!/xmlns=/.test(s))s=s.replace("<svg",'<svg xmlns="http://www.w3.org/2000/svg"');return s}
+async function drawSvg(g){g.svgFail=false;for(let k=0;k<2&&!g.svg;k++){try{g.svg=cleanSvg(await ai("Draw a top-down bird's-eye 2D layout of this Roblox game arena as ONE SVG with viewBox 0 0 400 300. Flat colors, simple shapes (rect, circle, polygon) and short text labels only. Label spawn points, hazards, goals and zones. No scripts, no images. Output ONLY the complete <svg>...</svg> element.","Game: "+g.plan.slice(0,600),2500))}catch(e){}}if(!g.svg)g.svgFail=true;render()}
+function startImg(g){g.imgState="load";g.imgSrc="";g.svg="";bs(g,"design","SketchBot","work");
+ const t=g.plan.split("\n")[0].replace(/\s+/g," ").slice(0,260);
+ const url="https://image.pollinations.ai/prompt/"+encodeURIComponent("top-down bird's eye view concept art of a Roblox-style game arena, low-poly, colorful, clear zones and paths, no text. "+t)+"?width=768&height=512&nologo=true&seed="+Math.floor(Math.random()*1e6);
+ const im=new Image();
+ im.onload=()=>{g.imgSrc=url;g.imgState="ok";bs(g,"design","SketchBot","done")};
+ im.onerror=()=>{if(g.imgState!=="ok"){g.imgState="fail";bs(g,"design","SketchBot","err");drawSvg(g)}};
+ im.src=url;
+ setTimeout(()=>{if(g.imgState==="load"){g.imgState="fail";bs(g,"design","SketchBot","err");drawSvg(g)}},60000)}
 async function s2(g){setS(g,"design","run");
  const T=["Explorer folders and map Parts: exact Names, Sizes, Positions, Materials","Player setup: WalkSpeed, MaxHealth, rules, win/lose, weapon or tool","ScreenGui elements (health, score, timer) with Position, Size, Text, plus Lighting values"];
- const res=await fan(g,"design",(b,i)=>i<3?ai(`You are ${b[0]}, a Roblox Studio designer. Give concrete values and exact names.`,`Game: ${g.plan.slice(0,900)}\nTask: ${T[i]}`,380,g):ai("Draw a top-down bird's-eye 2D layout of this Roblox game arena as ONE SVG with viewBox 0 0 400 300. Flat colors, simple shapes and text labels only (rect, circle, polygon, text). Label spawn points, hazards, goals and zones. No scripts, no images. Output ONLY the <svg> element.","Game: "+g.plan.slice(0,700),1200,g));
- g.design=res.slice(0,3).map((x,k)=>`== ${S("design").bots[k][0]} ==\n${x.trim()}`).join("\n\n");g.out.design=g.design;g.svg=cleanSvg(res[3]);setS(g,"design","done")}
+ const res=await fan(g,"design",(b,i)=>i<3?ai(`You are ${b[0]}, a Roblox Studio designer. Give concrete values and exact names.`,`Game: ${g.plan.slice(0,900)}\nTask: ${T[i]}`,380,g):Promise.resolve(""));
+ g.design=res.slice(0,3).map((x,k)=>`== ${S("design").bots[k][0]} ==\n${x.trim()}`).join("\n\n");g.out.design=g.design;startImg(g);setS(g,"design","done")}
 
 async function s3(g){setS(g,"code","run");
  const F=[["ServerScriptService/GameManager","Game loop, rounds, match timer, scoring, RemoteEvents, win/lose."],["ServerScriptService/NPCController","Enemy or hazard spawning and behaviour, damage, respawn."],["StarterPlayerScripts/PlayerController","LocalScript: movement, weapon or tool input, effects, RemoteEvent listeners."],["StarterGui/GameGui","LocalScript: health bar, score, match timer, messages via RemoteEvents."],["ServerScriptService/MapBuilder","Build the arena Parts at runtime."]];
@@ -172,30 +203,44 @@ async function s5(g){setS(g,"wiz","run");g.bot["wiz:Wizard"]="work";render();
  const ex=Object.entries(g.files).map(([p,c])=>`FILE ${p} (${kind(p)})\n${c.slice(0,450)}`).join("\n\n");
  const t=await ai("You are the Wizard. In plain language for a beginner, explain what each file does, where it goes in Studio and what to watch for. Use ONLY the code excerpts given. End with: RECOMMENDATION: APPROVE or NEEDS CHANGES.",`Game: ${g.plan.slice(0,400)}\n\n${ex}\n\nReview notes:\n${g.out.review.slice(0,600)}`,700,g);
  g.out.wiz=t.trim();g.bot["wiz:Wizard"]="done";setS(g,"wiz","wait")}
-async function approve(){const g=CUR;g.st.wiz="done";g.open.test=true;g.running=true;g.err="";render();try{await s6(g)}catch(e){fail(g,e)}g.running=false;render()}
-async function s6(g){setS(g,"test","run");
- const F=["fun factor and engagement","bugs and edge cases","game balance and scoring","performance with 12+ players","UX and GUI clarity"];
- const sample=Object.entries(g.files).map(([p,c])=>`--${p}\n${c.slice(0,500)}`).join("\n---\n");
- const res=await fan(g,"test",(b,i)=>ai(`You are ${b[0]}, a Roblox tester for ${F[i]}. The code is shown as excerpts, so judge only what you can see. FIRST LINE must be "Score: X/10". Then 2 sentences of specific feedback and one concrete issue to fix.`,`Game: ${g.plan.slice(0,300)}\nCode:\n${sample.slice(0,2200)}`,230,g));
- g.scores=res.map((t,i)=>{const m=t.match(/Score:\s*(\d+)/i);return{n:S("test").bots[i][0],s:m?Math.min(10,+m[1]):7,fb:t.replace(/Score:\s*\d+\/10\s*/i,"").trim()}});
- const lo=g.scores.slice().sort((a,b)=>a.s-b.s)[0],hi=g.scores.slice().sort((a,b)=>b.s-a.s)[0];
- g.v.test={good:[`average score ${avg(g.scores)}/10`,`${hi.n}: ${hi.fb.split(/(?<=[.!?])\s/)[0]}`],risks:[`${lo.n} (${lo.s}/10): ${lo.fb.split(/(?<=[.!?])\s/)[0]}`],rec:+avg(g.scores)>=7&&lo.s>=4?"APPROVE":"FIX"};
- g.st.test="wait";g.st.ship="wait";render()}
+async function approve(){const g=CUR;g.st.wiz="done";g.open.test=true;g.running=true;g.err="";render();try{await s6(g)}catch(e){fail(g,e)}g.running=false;render();if(!g.err&&g.scores.length)await improve(g)}
 
-async function fixRound(){const g=CUR;g.prev=g.scores.map(x=>({...x}));g.stopped=false;g.running=true;g.err="";g.open.fix=true;g.st.fix="run";g.st.test="done";g.bot["fix:Wizard"]="work";render();
- try{const w=await ai("You are the Wizard. Delegate the fixes to the Coders. Pick at most 3 files. One line per file, exactly: FILE: <path from the list> | FIX: <what to change>","Files: "+Object.keys(g.files).join(", ")+"\nTester issues:\n"+g.scores.map(x=>`${x.n} (${x.s}/10): ${x.fb}`).join("\n"),350,g);
-  const jobs=w.split("\n").map(l=>/FILE:\s*([^|]+)\|\s*FIX:\s*(.+)/i.exec(l)).filter(Boolean).map(m=>[m[1].replace(/[`*]/g,"").replace(/\.lua$/i,"").trim(),m[2].trim()]).filter(j=>g.files[j[0]]).slice(0,3);
-  if(!jobs.length)throw new Error("The Wizard named no valid file to fix. Click Fix issues again.");
-  g.out.fix="Wizard delegated:\n"+jobs.map(j=>j[0].split("/").join(" → ")+"\n   fix: "+j[1]).join("\n");g.bot["fix:Wizard"]="done";g.bot["fix:Coders"]="work";render();
-  await Promise.all(jobs.map(async j=>{const c=await ai("Expert Roblox Lua scripter. Apply ONLY the requested fix to this script and keep everything else identical. Plain Lua only. Output ONLY the full corrected code.",`Fix: ${j[1]}\n\nScript ${j[0]}:\n${g.files[j[0]].slice(0,7000)}`,1800,g);g.files[j[0]]=code0(c)}));
-  g.bot["fix:Coders"]="done";g.bot["fix:Testers"]="work";await checkFiles(g);await s6(g);g.bot["fix:Testers"]="done";g.st.fix="done"}
+const snap=g=>({files:clone(g.files),scores:clone(g.scores),avg:+avg(g.scores),parser:g.parser?clone(g.parser):null,fixed:{...g.fixed}});
+async function score(g,idx){const F=["fun factor and engagement","bugs and edge cases","game balance and scoring","performance with 12+ players","UX and GUI clarity"];
+ const sample=Object.entries(g.files).map(([p,c])=>`--${p}\n${c.slice(0,500)}`).join("\n---\n").slice(0,2200);
+ const pr=g.parser?"Parser: "+Object.values(g.parser).map(r=>r.name.split("/").pop()+(r.syntaxOk?" ok":" FAILS")).join(", "):"";
+ return Promise.all(idx.map(async i=>{const b=S("test").bots[i];bs(g,"test",b[0],"work");
+  const t=await ai(`You are ${b[0]}, a Roblox tester for ${F[i]}. The code is shown as excerpts, so judge only what you can see. FIRST LINE must be "Score: X/10". Then 2 sentences of specific feedback and one concrete issue to fix.`,`Game: ${g.plan.slice(0,300)}\n${pr}\nCode:\n${sample}`,230,g);
+  bs(g,"test",b[0],"done");const m=t.match(/Score:\s*(\d+)/i);return{n:b[0],s:m?Math.min(10,+m[1]):5,fb:t.replace(/Score:\s*\d+\/10\s*/i,"").trim()}}))}
+function testVerdict(g){const lo=g.scores.slice().sort((a,b)=>a.s-b.s)[0],hi=g.scores.slice().sort((a,b)=>b.s-a.s)[0];
+ g.v.test={good:[`average score ${avg(g.scores)}/10 (target ${TARGET})`,`${hi.n}: ${hi.fb.split(/(?<=[.!?])\s/)[0]}`],risks:[`${lo.n} (${lo.s}/10): ${lo.fb.split(/(?<=[.!?])\s/)[0]}`],rec:+avg(g.scores)>=TARGET?"APPROVE":"FIX"}}
+async function s6(g){setS(g,"test","run");g.scores=await score(g,[0,1,2,3,4]);testVerdict(g);g.best=snap(g);g.st.test="wait";g.st.ship="wait";render()}
+async function redoRatings(all){const g=CUR;const idx=all?g.scores.map((_,i)=>i):Object.keys(g.rsel).filter(k=>g.rsel[k]).map(Number);if(!idx.length||g.running)return;
+ g.running=true;g.err="";g.stopped=false;render();
+ try{const sc=await score(g,idx);idx.forEach((i,k)=>g.scores[i]=sc[k]);g.rsel={};testVerdict(g);g.best=snap(g);g.note=`Re-scored ${idx.length} tester(s). Average is now ${avg(g.scores)}/10.`}catch(e){fail(g,e)}g.running=false;render()}
+function togSel(i){const g=CUR;if(g.running)return;g.rsel[i]=!g.rsel[i];render()}
+
+async function fixOnce(g){g.round++;const before=clone(g.scores);g.open.fix=true;g.st.fix="run";["Wizard","Coders","Testers"].forEach(n=>g.bot["fix:"+n]="idle");g.bot["fix:Wizard"]="work";render();
+ const w=await ai("You are the Wizard. Delegate fixes to the Coders to raise the tester scores. Pick at most 3 files. One line per file, exactly: FILE: <path from the list> | FIX: <specific change>."+(g.lastFail?" "+g.lastFail:""),"Files: "+Object.keys(g.files).join(", ")+"\nTester issues:\n"+before.map(x=>`${x.n} (${x.s}/10): ${x.fb}`).join("\n"),400,g);
+ const jobs=w.split("\n").map(l=>/FILE:\s*([^|]+)\|\s*FIX:\s*(.+)/i.exec(l)).filter(Boolean).map(m=>[m[1].replace(/[`*]/g,"").replace(/\.lua$/i,"").trim(),m[2].trim()]).filter(j=>g.files[j[0]]).slice(0,3);
+ if(!jobs.length)throw new Error("The Wizard named no valid file to fix. Click Keep improving to try again.");
+ g.out.fix="Round "+g.round+": Wizard delegated\n"+jobs.map(j=>j[0].split("/").join(" → ")+"\n   fix: "+j[1]).join("\n");g.bot["fix:Wizard"]="done";g.bot["fix:Coders"]="work";render();
+ await Promise.all(jobs.map(async j=>{const c=await ai("Expert Roblox Lua scripter. Apply ONLY the requested fix to this script and keep everything else identical. Plain Lua only. Output ONLY the full corrected code.",`Fix: ${j[1]}\n\nScript ${j[0]}:\n${g.files[j[0]].slice(0,7000)}`,1800,g);g.files[j[0]]=code0(c)}));
+ g.bot["fix:Coders"]="done";g.bot["fix:Testers"]="work";await checkFiles(g);g.scores=await score(g,[0,1,2,3,4]);g.bot["fix:Testers"]="done";
+ const a=+avg(g.scores),kept=a>g.best.avg;g.rounds.push({n:g.round,before,now:clone(g.scores),kept,a0:g.best.avg,a1:a});
+ if(kept){g.best=snap(g);g.lastFail=""}else{g.files=clone(g.best.files);g.scores=clone(g.best.scores);g.parser=g.best.parser?clone(g.best.parser):null;g.fixed={...g.best.fixed};g.lastFail=`The last attempt scored ${a}, not better than ${g.best.avg}, and was reverted. Try a different approach.`}
+ testVerdict(g);g.st.fix="done";render()}
+async function improve(g){g.running=true;g.err="";g.stopped=false;g.note="";render();
+ try{while(+avg(g.scores)<TARGET&&g.round<MAXR&&!g.stopped)await fixOnce(g);
+  g.note=+avg(g.scores)>=TARGET?`Target reached: average ${avg(g.scores)}/10.`:`Stopped at average ${avg(g.scores)}/10 after ${g.round} fix round(s) (max ${MAXR}). Click Keep improving, or redo ratings you doubt.`}
  catch(e){fail(g,e)}g.running=false;render()}
+function keepImproving(){const g=CUR;g.round=Math.max(0,g.round-2);improve(g)}
 function ship(){const g=CUR;g.stopped=true;g.shipped=true;g.st.test="done";g.st.ship="done";g.tab="files";render()}
 async function pro(){const g=CUR;g.bot["ship:ProBot"]="work";render();
  try{const t=await ai("You are ProBot. Suggest 6 concrete add-ons that would make this Roblox game better. One per line, format: TITLE | impact (High/Med/Low) | effort (Easy/Med/Hard) | one sentence.",`Game: ${g.plan.slice(0,700)}\nFiles: ${Object.keys(g.files).join(", ")}`,500);
   g.up=t.split("\n").filter(l=>l.split("|").length>=4).slice(0,6).map(l=>l.split("|").map(x=>x.replace(/^[\s\d.*-]+/,"").trim()));g.bot["ship:ProBot"]="done"}catch(e){g.err=e.message;g.bot["ship:ProBot"]="err"}render()}
 
-async function helper(text){text=(text||"").trim();const g=CUR;if(!g||!g.plan||!text){HP.msg="Finish choosing an idea first, then describe the missing file.";return render()}
+async function helper(text){text=(text||"").trim();const g=CUR;if(!g||!g.plan||!Object.keys(g.files).length||!text){HP.msg="Wait until the game has files, then describe the missing file.";return render()}
  HP.st.forEach(s=>s[1]="idle");HP.msg="";render();$("hb").disabled=true;const step=(i,v)=>{HP.st[i][1]=v;render()};
  const ctx=`Game: ${g.plan.slice(0,500)}\nExisting files: ${Object.keys(g.files).join(", ")}`;
  try{step(0,"run");const w=await ai("You are the Wizard. Decide the single file to add. Reply exactly:\nPATH: ServiceName/FileName\nPURPOSE: one sentence",ctx+"\nRequest: "+text,150);
@@ -211,19 +256,26 @@ async function helper(text){text=(text||"").trim();const g=CUR;if(!g||!g.plan||!
 
 const cols=(t,a)=>`<div class="vd APPROVE" style="border-left-color:${t}"><div class="c">${a.map(x=>`<div><h5>${x[0]}</h5><ul>${x[1].map(y=>`<li>${esc(y)}</li>`).join("")||"<li>-</li>"}</ul></div>`).join("")}</div></div>`;
 const vd=v=>`<div class="vd ${v.rec}"><div class="h">Verdict: ${v.rec==="APPROVE"?"APPROVE":"FIX BEFORE APPROVING"}</div><div class="c"><div><h5>What is good</h5><ul>${v.good.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>-</li>"}</ul></div><div><h5>Watch out</h5><ul>${v.risks.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>nothing major</li>"}</ul></div></div></div>`;
-const cmp=g=>`<table class="cmp"><tr><th>Tester</th><th>Before</th><th>After</th><th>Change</th></tr>${g.scores.map((x,i)=>{const p=g.prev[i]?g.prev[i].s:null,d=p==null?0:x.s-p;return `<tr><td>${x.n}</td><td>${p==null?"-":p+"/10"}</td><td>${x.s}/10</td><td class="${d>0?"up":d<0?"dn":""}">${d>0?"+":""}${d}</td></tr>`}).join("")}<tr><td><b>Average</b></td><td>${avg(g.prev)}</td><td>${avg(g.scores)}</td><td></td></tr></table>`;
+const rtab=r=>`<div class="lbl">Round ${r.n}: average ${r.a0} → ${r.a1} (${r.kept?"kept":"reverted to the better version"})</div><table class="cmp"><tr><th>Tester</th><th>Before</th><th>After</th><th>Change</th></tr>${r.now.map((x,i)=>{const p=r.before[i]?r.before[i].s:0,d=x.s-p;return `<tr><td>${x.n}</td><td>${p}/10</td><td>${x.s}/10</td><td class="${d>0?"up":d<0?"dn":""}">${d>0?"+":""}${d}</td></tr>`}).join("")}</table>`;
 function stg(g,s){const st=g.st[s.id]||"idle";if(s.id==="fix"&&!g.st.fix)return"";const op=g.open[s.id]!==undefined?g.open[s.id]:(st==="run"||st==="wait"),lab={idle:"Waiting",run:"Working",wait:"Needs you",done:"Done",err:"Error"}[st];
  let b=`<p class="role">${esc(s.role)}</p><div class="bots">${s.bots.map(x=>{const k=g.bot[s.id+":"+x[0]]||"idle";return `<div class="bc ${k}"><i></i><b>${x[0]}</b><span>${esc(x[1])}</span></div>`}).join("")}</div>`;
- if(s.id==="idea"&&g.ideas.length)b+=`<div class="lbl">${st==="wait"?"Choose one idea":"Ideas"}</div><div class="ideas">${g.ideas.map((x,i)=>`<div class="idc ${g.sel===i?"sel":""}"><b>${esc(x.title)}</b><p>${esc(x.text)}</p><button class="btn sm ${g.sel===i?"gr":""}" ${g.running?"disabled":""} onclick="pick(${i})">${g.sel===i?"Chosen":"Choose this idea"}</button></div>`).join("")}</div>`;
- if(s.id==="ask"&&g.ask)b+=cols("#d33",[["Pros",g.ask.pros],["Cons",g.ask.cons],["Open questions",g.ask.qs]]);
- if(s.id==="better"&&g.final)b+=`<div class="lbl">Improved idea</div><pre class="out">${esc(g.plan)}</pre>`+cols("#e6b422",[["What changed",g.changes]]);
- if(s.id==="design"&&g.svg)b+=`<div class="lbl">Bird's-eye sketch (AI-drawn layout)</div><img class="sketch" alt="Bird's-eye layout" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(g.svg)}">`;
+ if(s.id==="idea"&&g.ideas.length){b+=`<div class="lbl">${st==="wait"?"Choose one idea":"Ideas"}</div><div class="ideas">${g.ideas.map((x,i)=>`<div class="idc ${g.sel===i?"sel":""}"><b>${esc(x.title)}</b><p>${esc(x.text)}</p><button class="btn sm ${g.sel===i?"gr":""}" ${g.running?"disabled":""} onclick="pick(${i})">${g.sel===i?"Chosen":"Choose this idea"}</button></div>`).join("")}</div>`;
+  b+=st==="wait"?`<div class="lbl">Your own questions for the Betterment bot (optional, one per line)</div><textarea class="myq" oninput="CUR.myq=this.value" placeholder="e.g. Will it work on mobile? How long is a round?">${esc(g.myq)}</textarea>`:(g.myq.trim()?`<div class="lbl">Your questions</div><pre class="out">${esc(g.myq)}</pre>`:"")}
+ if(s.id==="level"&&g.level)b+=cols("#6a8f00",[["Levels",g.level.levels],["Why players come back",g.level.hooks]])+(g.level.why?`<div class="mut" style="margin-top:6px">Strongest hook: ${esc(g.level.why)}</div>`:"");
+ if(s.id==="ask"&&g.qs.length)b+=(g.pros.length?cols("#d33",[["Pros",g.pros],["Cons",g.cons]]):"")+`<div class="lbl">Questions asked (${g.qs.length})</div>`+g.qs.map(x=>`<div class="qa"><b>${x.mine?'<span class="chip w">your question</span> ':""}<span class="chip">round ${x.r}</span> ${esc(x.q)}</b></div>`).join("");
+ if(s.id==="better"&&g.qa.length){const n=g.qa.filter(x=>!x.a.startsWith("(no answer")).length;b+=`<div class="lbl">Answers (${n} of ${g.qa.length} answered)</div>`+g.qa.map(x=>`<div class="qa"><b>${x.mine?'<span class="chip w">your question</span> ':""}${esc(x.q)}</b><span>${esc(x.a)}</span></div>`).join("");
+  if(g.final)b+=`<div class="lbl">Improved idea</div><pre class="out">${esc(g.plan.split("\nLevels:")[0])}</pre>`+cols("#e6b422",[["What changed",g.changes.slice(0,6)]])}
+ if(s.id==="design"){if(g.imgState==="ok")b+=`<div class="lbl">Bird's-eye image</div><img class="sketch" alt="Bird's-eye view of the game" src="${esc(g.imgSrc)}">`;
+  else if(g.imgState==="load")b+=`<div class="lbl">Bird's-eye image</div><div class="mut">Generating image, this can take up to a minute...</div>`;
+  else if(g.imgState==="fail")b+=`<div class="lbl">Bird's-eye layout</div>`+(g.svg?`<img class="sketch" alt="Drawn layout" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(g.svg)}"><div class="mut">The image service did not respond, so this is an AI-drawn layout instead.</div>`:`<div class="mut">${g.svgFail?"No image could be produced. Click Redo image.":"Image service did not respond, drawing a layout..."}</div>`);
+  if(g.imgState&&g.imgState!=="load")b+=`<div class="act"><button class="btn ol sm" onclick="startImg(CUR)">Redo image</button></div>`}
  if(g.out[s.id]&&s.id!=="better")b+=`<div class="lbl">Output</div><pre class="out">${esc(g.out[s.id])}</pre>`;
- if(s.id==="test"&&g.scores.length)b+=`<div class="lbl">Ratings and issues</div><div class="sc">${g.scores.map(x=>`<div class="sk"><b class="${x.s>=8?"g":x.s>=5?"a":"r"}">${x.s}/10</b><h6>${x.n}</h6>${esc(x.fb)}</div>`).join("")}</div>`;
- if(s.id==="fix"&&g.prev&&g.st.fix==="done")b+=`<div class="lbl">Previous rating vs new rating</div>`+cmp(g);
+ if(s.id==="test"&&g.scores.length){b+=`<div class="lbl">Ratings and issues (click a rating to select it, then redo)</div><div class="sc">${g.scores.map((x,i)=>`<div class="sk ${g.rsel[i]?"sel":""}" onclick="togSel(${i})"><b class="${x.s>=8?"g":x.s>=5?"a":"r"}">${x.s}/10</b><h6>${x.n}</h6>${esc(x.fb)}</div>`).join("")}</div>`;
+  b+=`<div class="act"><button class="btn ol" ${g.running||!Object.values(g.rsel).some(Boolean)?"disabled":""} onclick="redoRatings(false)">Redo selected ratings</button><button class="btn ol" ${g.running?"disabled":""} onclick="redoRatings(true)">Redo all ratings</button></div>`}
+ if(s.id==="fix")b+=g.rounds.map(rtab).join("");
  if(g.v[s.id])b+=vd(g.v[s.id]);
  if(s.id==="wiz"&&st==="wait")b+=`<div class="act"><button class="btn gr" onclick="approve()">Approve, run testers</button><button class="btn ol" onclick="jump('idea')">Choose a different idea</button></div>`;
- if(s.id==="test"&&st==="wait")b+=`<div class="act"><button class="btn" onclick="fixRound()" ${g.running?"disabled":""}>Fix issues</button><button class="btn gr" onclick="ship()">Ship it (stops all bots)</button></div>`;
+ if(s.id==="test"&&g.scores.length&&!g.shipped){b+=(g.note?`<div class="mut" style="margin-top:8px">${esc(g.note)}</div>`:"")+`<div class="act">${+avg(g.scores)<TARGET?`<button class="btn" ${g.running?"disabled":""} onclick="keepImproving()">Keep improving to ${TARGET}/10</button>`:""}<button class="btn gr" ${g.running?"disabled":""} onclick="ship()">Ship it (stops all bots)</button></div>`}
  if(s.id==="ship"&&(st==="wait"||st==="done"))b+=(g.shipped?`<div class="vd APPROVE"><div class="h">Shipped. Copy the scripts from the Files tab.</div></div>`:"")+`<div class="act"><button class="btn ol sm" onclick="pro()">${g.up?"Re-run":"Run"} ProBot</button></div>`+(g.up?`<div class="upg">${g.up.map(u=>`<div><b>${esc(u[0])}</b>${esc(u[1])} impact · ${esc(u[2])} effort<br>${esc(u[3])}</div>`).join("")}</div>`:"");
  return `<div class="stg ${st==="err"?"err":""}" id="s-${s.id}"><div class="sh" style="background:${s.bg}" onclick="tg('${s.id}')">${px(s.ic,s.col)}<b>${s.t}</b><span class="bd">${lab}</span><em>${op?"▲":"▼"}</em></div><div class="sb ${op?"o":""}">${b}</div></div>`}
 function view(g){
@@ -237,7 +289,8 @@ function view(g){
  return (g.err?`<div class="err">${esc(g.err)}</div>`:"")+`<div class="flow">${flow}</div><div class="stabs">${tabs}</div>`+body}
 function render(){
  $("gtabs").innerHTML=GAMES.map(g=>`<div class="gt ${g===CUR?"on":""}" onclick="sel(${g.id})">${px("idea",g===CUR?"#e6b422":"#6a6a85")}${esc(g.name)}${g.running?" ...":""}</div>`).join("");
- $("gview").innerHTML=CUR?view(CUR):`<div class="mut">Enter a theme above. Each game gets its own tab.</div>`;
+ const ae=document.activeElement,keep=ae&&ae.classList&&ae.classList.contains("myq");
+ if(!keep)$("gview").innerHTML=CUR?view(CUR):`<div class="mut">Enter a theme above. Each game gets its own tab.</div>`;
  $("hlog").innerHTML=HP.st.map(s=>`<div class="step ${s[1]}"><i></i>${s[0]}</div>`).join("")+(HP.msg?`<div class="mut" style="margin-top:6px">${esc(HP.msg)}</div>`:"")}
 const txt=g=>Object.entries(g.files).map(([p,c])=>`-- ===== ${p}.lua (${kind(p)}) =====\n${c}`).join("\n\n\n");
 function cp(i){const p=Object.keys(CUR.files)[i];navigator.clipboard.writeText(CUR.files[p])}
