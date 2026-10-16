@@ -1,846 +1,277 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
-<title>Roblox AI Game Studio</title>
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Roblox AI Game Studio</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 *{box-sizing:border-box;margin:0;padding:0}
-:root{
-  --bg:#09090f;--bg2:#111119;--bg3:#17171f;--bg4:#1e1e28;
-  --border:#252535;--border2:#353550;
-  --text:#eaeaf5;--text2:#9090b0;--text3:#55556a;
-  --accent:#7c6af5;--accent2:#5d4fd4;
-  --green:#22d3a0;--amber:#f5a623;--red:#f04060;
-  --pink:#d45aff;--blue:#4a9eff;
-  --font:'Space Grotesk',sans-serif;--mono:'JetBrains Mono',monospace;
-}
-html{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;line-height:1.6}
-body{min-height:100vh}
-.nav{display:flex;align-items:center;border-bottom:1px solid var(--border);background:var(--bg2);padding:0 2rem;position:sticky;top:0;z-index:100}
-.nav-logo{font-size:1rem;font-weight:700;color:#fff;padding:.85rem 1.5rem .85rem 0;border-right:1px solid var(--border);margin-right:1rem}
-.nav-logo span{color:var(--accent)}
-.nav-tab{padding:.85rem 1.1rem;font-size:.84rem;font-weight:500;cursor:pointer;color:var(--text3);border-bottom:2px solid transparent;transition:all .15s}
-.nav-tab:hover{color:var(--text2)}
-.nav-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
-.nav-ai{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:.73rem;padding:.4rem .8rem;background:var(--bg3);border:1px solid var(--border);border-radius:8px}
-.ai-dot{width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
-.page{display:none;padding:2rem 1.5rem 4rem;max-width:1100px;margin:0 auto}
-.page.active{display:block}
-.page-title{font-size:1.55rem;font-weight:700;color:#fff;margin-bottom:.3rem;letter-spacing:-.02em}
-.page-sub{color:var(--text2);font-size:.88rem;margin-bottom:1.75rem}
-.btn{padding:10px 20px;border-radius:10px;font-family:var(--font);font-weight:600;font-size:.87rem;cursor:pointer;border:none;transition:all .15s;white-space:nowrap;display:inline-flex;align-items:center;gap:6px}
-.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:var(--accent2)}
-.btn-primary:disabled{opacity:.35;cursor:not-allowed}
-.btn-outline{background:transparent;border:1px solid var(--border2);color:var(--text)}.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
-.btn-green{background:var(--green);color:#000;font-weight:700}
-.btn-red{background:var(--red);color:#fff}
-.btn-sm{padding:6px 13px;font-size:.79rem}
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:1.25rem}
-.lbl{font-size:.69rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);margin-bottom:6px}
-.outbox{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px;font-size:.77rem;line-height:1.75;white-space:pre-wrap;max-height:250px;overflow-y:auto;font-family:var(--mono);color:var(--text2)}
-.outbox::-webkit-scrollbar{width:4px}.outbox::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
-.errbox{background:rgba(240,64,96,.1);border:1px solid rgba(240,64,96,.3);border-radius:8px;padding:10px 14px;font-size:.82rem;color:var(--red);margin-top:10px;display:none}
-/* pipeline */
-.pipeline{display:flex;flex-direction:column;gap:.8rem}
-.stage{background:var(--bg2);border:1px solid var(--border);border-radius:13px;overflow:hidden;transition:border-color .25s}
-.stage.active{border-color:var(--accent)}.stage.done{border-color:var(--green)}
-.sh{display:flex;align-items:center;gap:11px;padding:12px 17px;cursor:pointer;user-select:none}
-.sh:hover{background:rgba(255,255,255,.015)}
-.si{font-size:1.25rem;width:32px;text-align:center}
-.st{font-size:.93rem;font-weight:600;flex:1;color:#fff}
-.ss{font-size:.75rem;color:var(--text3);font-weight:400}
-.sbadge{font-size:.67rem;font-weight:700;padding:3px 9px;border-radius:20px;text-transform:uppercase;letter-spacing:.05em}
-.idle{background:var(--bg3);color:var(--text3);border:1px solid var(--border)}
-.run{background:rgba(124,106,245,.18);color:var(--accent);border:1px solid var(--accent);animation:pulse 1.5s infinite}
-.done-b{background:rgba(34,211,160,.12);color:var(--green);border:1px solid var(--green)}
-.wait{background:rgba(74,158,255,.12);color:var(--blue);border:1px solid var(--blue)}
-@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
-.chev{font-size:.72rem;color:var(--text3);transition:transform .2s;margin-left:4px}
-.chev.o{transform:rotate(180deg)}
-.sb{display:none;padding:15px 17px;border-top:1px solid var(--border)}
-.sb.o{display:block}
-/* bots */
-.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:7px;margin-bottom:12px}
-.bc{background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:9px 11px;transition:border-color .2s}
-.bc.thinking{border-color:var(--accent);animation:pulse 1.2s infinite}
-.bc.done{border-color:var(--green)}
-.bn{font-size:.76rem;font-weight:600;color:#fff;margin-bottom:3px;display:flex;align-items:center;gap:5px}
-.bav{width:17px;height:17px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.56rem;font-weight:800;flex-shrink:0}
-.bst{font-size:.71rem;color:var(--text2);line-height:1.4;min-height:26px}
-/* concept cards */
-.cgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(188px,1fr));gap:9px;margin-bottom:13px}
-.cc{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px}
-.ccv{width:100%;height:72px;border-radius:6px;margin-bottom:7px;display:flex;align-items:center;justify-content:center;font-size:2rem;background:linear-gradient(135deg,var(--bg) 0%,var(--bg4) 100%);border:1px solid var(--border)}
-.cct{font-size:.79rem;font-weight:600;color:#fff;margin-bottom:3px}
-.ccb{font-size:.71rem;color:var(--text2);line-height:1.4;margin-bottom:6px}
-.tag{font-size:.64rem;padding:2px 7px;border-radius:20px;font-weight:700}
-.te{background:rgba(34,211,160,.14);color:var(--green)}
-.tm{background:rgba(245,166,35,.14);color:var(--amber)}
-.th{background:rgba(240,64,96,.14);color:var(--red)}
-/* wizard */
-.wbox{background:var(--bg3);border:1px solid var(--border2);border-radius:12px;padding:15px;margin-bottom:12px}
-.wt{font-size:.88rem;font-weight:600;color:#fff;margin-bottom:6px}
-.ws{font-size:.79rem;color:var(--text2);line-height:1.6;margin-bottom:11px;white-space:pre-wrap}
-.fc{border:1px solid var(--border);border-radius:8px;margin-bottom:7px;overflow:hidden}
-.fch{display:flex;justify-content:space-between;align-items:center;padding:7px 11px;background:var(--bg);font-size:.74rem;font-weight:600;gap:10px}
-.fch .fp{color:var(--blue);font-family:var(--mono)}
-.fcb{padding:9px 11px;font-size:.7rem;font-family:var(--mono);line-height:1.7;background:var(--bg3);color:var(--text2);white-space:pre-wrap;max-height:120px;overflow-y:auto}
-.fbrow{display:flex;gap:8px;margin-top:9px}
-.fbrow input{flex:1;background:var(--bg);border:1px solid var(--border2);border-radius:8px;padding:8px 11px;font-family:var(--font);font-size:.83rem;color:var(--text);outline:none}
-/* testers */
-.tgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:7px;margin-bottom:11px}
-.tc{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:11px}
-.tsc{font-size:1.4rem;font-weight:700;color:var(--green);margin-bottom:2px}
-.tsc.mid{color:var(--amber)}.tsc.low{color:var(--red)}
-.tn{font-size:.77rem;font-weight:600;color:#fff;margin-bottom:3px}
-.tf{font-size:.71rem;color:var(--text2);line-height:1.4}
-/* final */
-.tabrow{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px}
-.ftab{padding:4px 10px;border:1px solid var(--border);border-radius:6px;font-size:.72rem;cursor:pointer;color:var(--text2);font-family:var(--mono)}
-.ftab:hover{border-color:var(--border2)}.ftab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
-.codeout{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:13px;font-family:var(--mono);font-size:.71rem;line-height:1.8;white-space:pre-wrap;max-height:360px;overflow-y:auto;color:var(--text2)}
-.howto{margin-top:11px;padding:11px;background:rgba(124,106,245,.07);border:1px solid rgba(124,106,245,.17);border-radius:8px}
-.howto h4{font-size:.78rem;font-weight:700;color:var(--accent);margin-bottom:5px}
-.howto ol{padding-left:16px;font-size:.75rem;color:var(--text2);line-height:1.95}
-/* success */
-.succ{background:rgba(34,211,160,.08);border:1px solid rgba(34,211,160,.22);border-radius:13px;padding:1.5rem;text-align:center;margin-top:1.5rem;display:none;position:relative;overflow:hidden}
-.succ h2{font-size:1.3rem;font-weight:700;color:var(--green);margin-bottom:.3rem}
-.succ p{color:var(--text2);font-size:.84rem}
-/* video analyzer */
-.va-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem;margin-bottom:1.2rem}
-@media(max-width:680px){.va-grid{grid-template-columns:1fr}}
-.dropzone{border:2px dashed var(--border2);border-radius:13px;padding:2.2rem 1.5rem;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg3);min-height:200px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px}
-.dropzone:hover,.dropzone.over{border-color:var(--accent);background:rgba(124,106,245,.06)}
-.dicon{font-size:2.6rem}
-.dtitle{font-size:.92rem;font-weight:600;color:#fff}
-.dsub{font-size:.76rem;color:var(--text3)}
-.dsub span{color:var(--accent)}
-.fstrip{display:flex;gap:5px;overflow-x:auto;padding:5px 0;margin-top:7px}
-.fthumb{width:76px;height:48px;object-fit:cover;border-radius:5px;border:1px solid var(--border);flex-shrink:0}
-.ctx{width:100%;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:9px 11px;font-family:var(--font);font-size:.83rem;color:var(--text);resize:vertical;min-height:85px;outline:none;margin-bottom:9px}
-.ctx::placeholder{color:var(--text3)}
-.aout{background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:15px;font-size:.82rem;line-height:1.8;color:var(--text2);white-space:pre-wrap;min-height:190px;max-height:460px;overflow-y:auto}
-.spin{display:inline-block;width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spinning .7s linear infinite;vertical-align:middle;margin-right:7px}
-@keyframes spinning{to{transform:rotate(360deg)}}
-@keyframes confettiFall{0%{transform:translateY(-20px) rotate(0deg);opacity:1}100%{transform:translateY(600px) rotate(720deg);opacity:0}}
-</style>
-</head>
-<body>
+:root{--bg:#09090f;--b2:#111119;--b3:#17171f;--bd:#252535;--bd2:#353550;--tx:#eaeaf5;--t2:#9090b0;--t3:#6a6a85;--ac:#7c6af5;--gr:#22d3a0;--am:#f5a623;--rd:#f04060;--bl:#4a9eff;--f:'Space Grotesk',sans-serif;--m:'JetBrains Mono',monospace}
+html{background:var(--bg);color:var(--tx);font:14px/1.6 var(--f)}
+.px{width:22px;height:22px;image-rendering:pixelated;flex-shrink:0;animation:bob 2s steps(4,end) infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
+@keyframes pl{50%{opacity:.5}}
+.nav{display:flex;align-items:center;gap:6px;background:var(--b2);border-bottom:1px solid var(--bd);padding:0 1.2rem;position:sticky;top:0;z-index:50}
+.logo{font-weight:700;display:flex;gap:8px;align-items:center;padding:.8rem 1rem .8rem 0;margin-right:.5rem;border-right:1px solid var(--bd)}
+.nt{padding:.85rem 1rem;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;font-weight:500}.nt.on{color:var(--ac);border-color:var(--ac)}
+.ai{margin-left:auto;font-size:.75rem;background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:.35rem .7rem;display:flex;gap:6px;align-items:center}
+.ai i{width:7px;height:7px;border-radius:50%;background:var(--gr)}
+.wrap{display:grid;grid-template-columns:1fr 310px;gap:1.2rem;max-width:1280px;margin:0 auto;padding:1.4rem 1.2rem 4rem}
+@media(max-width:900px){.wrap{grid-template-columns:1fr}}
+.page{display:none}.page.on{display:block}
+h1{font-size:1.5rem;letter-spacing:-.02em}.sub{color:var(--t2);margin-bottom:1rem}
+.card{background:var(--b2);border:1px solid var(--bd);border-radius:14px;padding:1rem;margin-bottom:.9rem}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+input,textarea{background:var(--b3);border:1px solid var(--bd2);border-radius:9px;padding:9px 12px;color:var(--tx);font:inherit;outline:none}
+input:focus,textarea:focus{border-color:var(--ac)}
+.btn{border:0;border-radius:9px;padding:9px 16px;font:600 .85rem var(--f);cursor:pointer;background:var(--ac);color:#fff}
+.btn:disabled{opacity:.4;cursor:not-allowed}.btn.gr{background:var(--gr);color:#000}.btn.rd{background:var(--rd)}.btn.ol{background:0;border:1px solid var(--bd2);color:var(--tx)}.btn.sm{padding:5px 11px;font-size:.76rem}
+.err{background:rgba(240,64,96,.1);border:1px solid rgba(240,64,96,.35);color:var(--rd);border-radius:9px;padding:9px 13px;margin-bottom:.8rem;font-size:.82rem}
+.mut{color:var(--t3);font-size:.82rem}
+details.pain summary{cursor:pointer;font-weight:600}details.pain ul{margin:.6rem 0 0 1.1rem;color:var(--t2);font-size:.82rem}details.pain b{color:var(--tx)}
+.gtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.9rem}
+.gt{display:flex;gap:7px;align-items:center;padding:7px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--b2);cursor:pointer;font-size:.82rem}.gt.on{border-color:var(--ac);background:rgba(124,106,245,.12)}
+.flow{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:.9rem}
+.fs{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--bd);border-radius:9px;background:var(--b2);font-size:.75rem;cursor:pointer;color:var(--t2)}
+.fs.run{border-color:var(--ac);animation:pl 1.4s infinite}.fs.done{border-color:var(--gr);color:var(--tx)}.fs.wait{border-color:var(--bl);color:var(--tx)}.fs.err{border-color:var(--rd)}
+.ar{color:var(--t3)}
+.stabs{display:flex;gap:4px;margin-bottom:.8rem;border-bottom:1px solid var(--bd)}
+.st{padding:8px 14px;cursor:pointer;color:var(--t3);border-bottom:2px solid transparent;font-weight:500}.st.on{color:var(--ac);border-color:var(--ac)}
+.stg{background:var(--b2);border:1px solid var(--bd);border-radius:13px;margin-bottom:.7rem;overflow:hidden}
+.stg.run{border-color:var(--ac)}.stg.done{border-color:var(--gr)}.stg.wait{border-color:var(--bl)}.stg.err{border-color:var(--rd)}
+.sh{display:flex;align-items:center;gap:10px;padding:11px 15px;cursor:pointer}.sh b{flex:1}.sh em{color:var(--t3);font-style:normal;font-size:.7rem}
+.bd{font-size:.64rem;font-weight:700;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid var(--bd);color:var(--t3)}
+.bd.run{color:var(--ac);border-color:var(--ac)}.bd.done{color:var(--gr);border-color:var(--gr)}.bd.wait{color:var(--bl);border-color:var(--bl)}.bd.err{color:var(--rd);border-color:var(--rd)}
+.sb{display:none;padding:4px 15px 15px;border-top:1px solid var(--bd)}.sb.o{display:block}
+.role{color:var(--t2);font-size:.82rem;margin:.7rem 0}
+.lbl{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin:.7rem 0 5px}
+.bots{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
+.bc{background:var(--b3);border:1px solid var(--bd);border-radius:9px;padding:7px 10px;font-size:.74rem;position:relative}
+.bc i{position:absolute;right:9px;top:11px;width:7px;height:7px;border-radius:50%;background:var(--bd2)}
+.bc.work{border-color:var(--ac)}.bc.work i{background:var(--ac);animation:pl 1s infinite}.bc.done i{background:var(--gr)}.bc.err i{background:var(--rd)}
+.bc b{display:block}.bc span{color:var(--t2)}
+pre.out,pre.code{background:var(--b3);border:1px solid var(--bd);border-radius:9px;padding:10px;font:.72rem/1.7 var(--m);color:var(--t2);white-space:pre-wrap;max-height:260px;overflow:auto}
+pre.code{max-height:380px;background:var(--bg)}
+.vd{border:1px solid var(--bd2);border-left:4px solid var(--gr);border-radius:10px;padding:10px 13px;margin-top:.8rem;background:var(--b3)}.vd.FIX{border-left-color:var(--am)}
+.vd .h{font-weight:700;margin-bottom:6px}.vd.APPROVE .h{color:var(--gr)}.vd.FIX .h{color:var(--am)}
+.vd .c{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.78rem;color:var(--t2)}.vd h5{font-size:.66rem;text-transform:uppercase;color:var(--t3)}.vd ul{margin-left:1rem}
+.sc{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:.7rem}
+.sk{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:.76rem;color:var(--t2)}.sk b{font-size:1.3rem}.sk b.g{color:var(--gr)}.sk b.a{color:var(--am)}.sk b.r{color:var(--rd)}.sk h6{color:var(--tx);font-size:.78rem}
+.act{display:flex;gap:8px;flex-wrap:wrap;margin-top:.8rem}
+.chk{list-style:none;margin:.5rem 0;font-size:.8rem}.chk li{padding:4px 0;color:var(--t2)}.chk b.APPROVE{color:var(--gr)}.chk b.FIX{color:var(--am)}
+.file{margin-bottom:1rem}.crumb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:.76rem var(--m);margin-bottom:6px;color:var(--bl)}.crumb em{color:var(--t3);font-style:normal}
+.chip{font:600 .66rem var(--f);padding:2px 8px;border-radius:20px;background:rgba(124,106,245,.15);color:var(--ac)}.chip.ok{background:rgba(34,211,160,.15);color:var(--gr)}.chip.bad{background:rgba(240,64,96,.15);color:var(--rd)}.chip.w{background:rgba(245,166,35,.15);color:var(--am)}
+.part{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;margin-bottom:6px;background:var(--b3)}.part b{min-width:170px}.part span{flex:1;color:var(--t2);font-size:.78rem}
+.up{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:.7rem}.up div{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:.76rem;color:var(--t2)}.up b{color:var(--tx);display:block}
+aside .card{position:sticky;top:64px}.step{display:flex;gap:8px;align-items:center;font-size:.78rem;color:var(--t3);padding:3px 0}.step.run{color:var(--ac)}.step.done{color:var(--gr)}.step.err{color:var(--rd)}.step i{width:7px;height:7px;border-radius:50%;background:currentColor}
+.dz{border:2px dashed var(--bd2);border-radius:13px;padding:2rem;text-align:center;cursor:pointer;background:var(--b3)}.dz:hover{border-color:var(--ac)}
+.fstrip{display:flex;gap:5px;overflow-x:auto;margin-top:8px}.fstrip img{width:76px;height:48px;object-fit:cover;border-radius:5px;border:1px solid var(--bd)}
+.aout{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:14px;white-space:pre-wrap;min-height:180px;max-height:460px;overflow:auto;font-size:.82rem;color:var(--t2)}
+</style></head><body>
+<div class="nav"><div class="logo" id="logo"></div><div class="nt on" onclick="pg('studio',this)">Game Studio</div><div class="nt" onclick="pg('video',this)">Video Analyzer</div><div class="ai"><i id="aid"></i><span id="ail">Checking AI...</span></div></div>
 
-<div class="nav">
-  <div class="nav-logo">🎮 Roblox <span>AI</span> Studio</div>
-  <div class="nav-tab active" onclick="showPage('studio',this)">🛠 Game Studio</div>
-  <div class="nav-tab" onclick="showPage('analyzer',this)">🎬 Video Analyzer</div>
-  <div class="nav-ai"><div class="ai-dot" id="aiDot"></div><span id="aiLabel">Checking AI...</span></div>
+<div class="wrap">
+<main>
+<div class="page on" id="p-studio">
+ <h1>Game Studio</h1><div class="sub">One idea in. Planned, designed, coded, checked and tested, with a verdict at every step.</div>
+ <details class="pain card"><summary>Why each step exists: common Roblox beginner pain points</summary><ul>
+  <li><b>Script in the wrong place:</b> every file shows its location as an arrow path plus its script type.</li>
+  <li><b>Server vs client mix-ups:</b> PlacementBot checks this, and the file type is always labelled.</li>
+  <li><b>Untested scripts:</b> a real Lua parser runs, then 5 testers score the game.</li>
+  <li><b>Messy, incomplete projects:</b> the Anatomy tab shows which parts exist and which are missing.</li>
+  <li><b>"AI fixed it but I learned nothing":</b> each stage explains what's good, what's risky and what to approve.</li></ul></details>
+ <div class="card"><div class="row"><input id="gp" style="flex:1;min-width:200px" value="dodge cannon game" placeholder="Describe a game, e.g. zombie survival, obby with power-ups"><button class="btn" onclick="go()">Generate game</button></div></div>
+ <div class="gtabs" id="gtabs"></div><div id="gview"></div>
 </div>
 
-<!-- ═══════════════════ STUDIO PAGE ═══════════════════ -->
-<div class="page active" id="page-studio">
-  <div style="margin-bottom:1.4rem">
-    <div class="page-title">Game Studio Pipeline</div>
-    <div class="page-sub">Describe your game — 23 AI bots across 7 stages generate Roblox Lua scripts, then a parser checks and auto-fixes syntax errors</div>
-  </div>
-  <div class="card" style="margin-bottom:1.4rem">
-    <div style="display:flex;gap:10px;align-items:center">
-      <input type="text" id="gamePrompt"
-        style="flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:11px 14px;font-family:var(--font);font-size:.92rem;color:var(--text);outline:none;transition:border-color .2s"
-        placeholder='"water gun chaser game", "zombie survival", "obstacle course with power-ups"...'
-        value="water gun chaser game"
-        onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
-      <button class="btn btn-primary" id="startBtn" onclick="startPipeline()">Generate Game ✦</button>
-    </div>
-    <div class="errbox" id="errBox"></div>
-  </div>
-
-  <div class="pipeline">
-    <!-- Ideators -->
-    <div class="stage" id="stg-ideators">
-      <div class="sh" onclick="tog('ideators')"><span class="si">💡</span>
-        <div style="flex:1"><span class="st">Ideators</span> <span class="ss">— 5 bots · concepts + AI image prompts</span></div>
-        <span class="sbadge idle" id="badge-ideators">Idle</span><span class="chev" id="chev-ideators">▼</span>
-      </div>
-      <div class="sb" id="sb-ideators">
-        <div class="lbl">Bot activity</div><div class="bgrid" id="bg-ideators"></div>
-        <div class="lbl">Concept cards + image prompts</div><div class="cgrid" id="cg-ideators"></div>
-        <div class="lbl">Game plan</div><div class="outbox" id="out-ideators">Waiting...</div>
-      </div>
-    </div>
-    <!-- Designers -->
-    <div class="stage" id="stg-designers">
-      <div class="sh" onclick="tog('designers')"><span class="si">🎨</span>
-        <div style="flex:1"><span class="st">Designers</span> <span class="ss">— 5 bots · Explorer + map layout</span></div>
-        <span class="sbadge idle" id="badge-designers">Idle</span><span class="chev" id="chev-designers">▼</span>
-      </div>
-      <div class="sb" id="sb-designers">
-        <div class="lbl">Bot activity</div><div class="bgrid" id="bg-designers"></div>
-        <div class="lbl">Design output</div><div class="outbox" id="out-designers">Waiting...</div>
-      </div>
-    </div>
-    <!-- Coders -->
-    <div class="stage" id="stg-coders">
-      <div class="sh" onclick="tog('coders')"><span class="si">💻</span>
-        <div style="flex:1"><span class="st">Coders</span> <span class="ss">— 5 bots · Lua scripts</span></div>
-        <span class="sbadge idle" id="badge-coders">Idle</span><span class="chev" id="chev-coders">▼</span>
-      </div>
-      <div class="sb" id="sb-coders">
-        <div class="lbl">Bot activity</div><div class="bgrid" id="bg-coders"></div>
-        <div class="lbl">Scripts written</div><div class="outbox" id="out-coders">Waiting...</div>
-      </div>
-    </div>
-    <!-- Reviewers -->
-    <div class="stage" id="stg-reviewers">
-      <div class="sh" onclick="tog('reviewers')"><span class="si">🔍</span>
-        <div style="flex:1"><span class="st">Reviewers</span> <span class="ss">— 3 bots + Lua parser · syntax + logic</span></div>
-        <span class="sbadge idle" id="badge-reviewers">Idle</span><span class="chev" id="chev-reviewers">▼</span>
-      </div>
-      <div class="sb" id="sb-reviewers">
-        <div class="lbl">Bot activity</div><div class="bgrid" id="bg-reviewers"></div>
-        <div class="lbl">Review report</div><div class="outbox" id="out-reviewers">Waiting...</div>
-      </div>
-    </div>
-    <!-- Wizard -->
-    <div class="stage" id="stg-wizard">
-      <div class="sh" onclick="tog('wizard')"><span class="si">🧙</span>
-        <div style="flex:1"><span class="st">Wizard Approval Gate</span> <span class="ss">— your sign-off required</span></div>
-        <span class="sbadge idle" id="badge-wizard">Idle</span><span class="chev" id="chev-wizard">▼</span>
-      </div>
-      <div class="sb" id="sb-wizard"><div id="wiz-content" style="color:var(--text3);font-size:.83rem">Waiting...</div></div>
-    </div>
-    <!-- Testers -->
-    <div class="stage" id="stg-testers">
-      <div class="sh" onclick="tog('testers')"><span class="si">🧪</span>
-        <div style="flex:1"><span class="st">Tester Bots</span> <span class="ss">— 5 bots · gameplay · bugs · balance</span></div>
-        <span class="sbadge idle" id="badge-testers">Idle</span><span class="chev" id="chev-testers">▼</span>
-      </div>
-      <div class="sb" id="sb-testers">
-        <div class="tgrid" id="tg-testers"></div>
-        <div class="lbl">Aggregate feedback</div><div class="outbox" id="out-testers">Awaiting approval...</div>
-        <div id="tact" style="display:none;margin-top:13px">
-          <div style="font-size:.81rem;color:var(--text2);margin-bottom:8px">Your decision:</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <button class="btn btn-green" onclick="excellentWork()">✓ Excellent Work! Ship it.</button>
-            <button class="btn btn-red" onclick="showEl('tFBArea')">✗ Needs changes</button>
-          </div>
-          <div id="tFBArea" style="display:none;margin-top:9px">
-            <div class="fbrow">
-              <input type="text" id="tFBInput" placeholder="What to improve..."/>
-              <button class="btn btn-primary btn-sm" onclick="rerun('t')">Rerun ✦</button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Final -->
-    <div class="stage" id="stg-final">
-      <div class="sh" onclick="tog('final')"><span class="si">📦</span>
-        <div style="flex:1"><span class="st">Final Game Files</span> <span class="ss">— paste into Roblox Studio</span></div>
-        <span class="sbadge idle" id="badge-final">Idle</span><span class="chev" id="chev-final">▼</span>
-      </div>
-      <div class="sb" id="sb-final"><div id="fin-content" style="color:var(--text3);font-size:.83rem">Approved files appear here...</div></div>
-    </div>
-  </div>
-  <div class="succ" id="succBanner">
-    <h2>🎉 Excellent Work! Game Shipped!</h2>
-    <p>All bots stopped. Copy scripts from Final Files and paste into Roblox Studio.</p>
-  </div>
+<div class="page" id="p-video">
+ <h1>Video Error Analyzer</h1><div class="sub">Record the Studio error, upload it, get a diagnosis and fix.</div>
+ <div class="card"><div class="dz" onclick="$('vf').click()"><div id="dt">Click to upload a video (max 200MB)</div></div><input type="file" id="vf" accept="video/*" style="display:none" onchange="vid(this.files[0])"><div class="fstrip" id="fstrip"></div>
+ <textarea id="vctx" style="width:100%;margin-top:8px;min-height:70px" placeholder="What were you building and what went wrong?"></textarea>
+ <div class="row" style="margin-top:8px"><button class="btn" id="vbtn" onclick="anl()" disabled>Analyze and fix</button></div><div class="err" id="verr" style="display:none;margin-top:8px"></div></div>
+ <div class="card"><div class="lbl">Analysis <span id="vmod"></span></div><div class="aout" id="aout">Upload a recording to begin.</div>
+ <div class="row" style="margin-top:8px"><button class="btn ol sm" onclick="navigator.clipboard.writeText(LA)">Copy</button></div></div>
 </div>
+</main>
 
-<!-- ═══════════════════ VIDEO ANALYZER PAGE ═══════════════════ -->
-<div class="page" id="page-analyzer">
-  <div style="margin-bottom:1.4rem">
-    <div class="page-title">🎬 Video Error Analyzer</div>
-    <div class="page-sub">Screen-record your Roblox Studio error → upload here → AI diagnoses and fixes it</div>
-  </div>
-  <div class="va-grid">
-    <div>
-      <div class="card" style="margin-bottom:1rem">
-        <div class="lbl">Upload screen recording</div>
-        <div class="dropzone" id="dzone" onclick="document.getElementById('vfile').click()"
-          ondragover="event.preventDefault();this.classList.add('over')"
-          ondragleave="this.classList.remove('over')"
-          ondrop="handleDrop(event)">
-          <div class="dicon" id="dicon">🎬</div>
-          <div class="dtitle" id="dtitle">Drop video or click to upload</div>
-          <div class="dsub" id="dsub">MP4, MOV, WebM · max 200MB<br><span>click to browse files</span></div>
-        </div>
-        <input type="file" id="vfile" accept="video/*" style="display:none" onchange="handleVid(this.files[0])"/>
-        <div id="fsection" style="display:none;margin-top:9px">
-          <div class="lbl">Extracted frames (<span id="fcount">0</span>)</div>
-          <div class="fstrip" id="fstrip"></div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="lbl">Additional context (optional but helpful)</div>
-        <textarea class="ctx" id="ctx" placeholder="e.g. I wrote an NPC chase script, when I press Play the NPC spawns but falls through the floor and gives error on line 23..."></textarea>
-        <button class="btn btn-primary" id="analyzeBtn" onclick="analyzeVid()" disabled>🔍 Analyze &amp; Fix</button>
-        <div class="errbox" id="vaErr"></div>
-      </div>
-    </div>
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:9px">
-        <div class="lbl" style="margin:0">AI analysis</div>
-        <div id="vaModel" style="font-size:.7rem;color:var(--text3)"></div>
-      </div>
-      <div class="aout" id="aout">
-        <div style="color:var(--text3);font-size:.82rem;text-align:center;padding-top:30px">
-          Upload a recording of your Roblox Studio error.<br><br>
-          AI will identify:<br>
-          • Exactly what the error is<br>
-          • Why it's happening<br>
-          • Step-by-step fix with Lua code<br>
-          • How to prevent it
-        </div>
-      </div>
-      <div style="display:flex;gap:7px;margin-top:9px;flex-wrap:wrap">
-        <button class="btn btn-outline btn-sm" id="copyABtn" onclick="copyA()" style="display:none">📋 Copy</button>
-        <button class="btn btn-outline btn-sm" id="fuBtn" onclick="showEl('fuSection')" style="display:none">💬 Follow-up</button>
-      </div>
-      <div id="fuSection" style="display:none;margin-top:9px">
-        <div class="fbrow">
-          <input type="text" id="fuInput" placeholder="Ask about the error..."/>
-          <button class="btn btn-primary btn-sm" onclick="sendFU()">Ask ✦</button>
-        </div>
-      </div>
-    </div>
-  </div>
-  <div class="card">
-    <div class="lbl">Recording tips</div>
-    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:9px;margin-top:4px">
-      <div style="font-size:.76rem;color:var(--text2);padding:8px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)"><b style="color:#fff;display:block;margin-bottom:3px">📺 What to show</b>The Output panel with the error, the script with the highlighted line, and what happens in-game</div>
-      <div style="font-size:.76rem;color:var(--text2);padding:8px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)"><b style="color:#fff;display:block;margin-bottom:3px">⏱ Duration</b>15–60 seconds. Show the error appearing, scroll to the script, show what you expected</div>
-      <div style="font-size:.76rem;color:var(--text2);padding:8px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)"><b style="color:#fff;display:block;margin-bottom:3px">🆓 Free recorders</b>Windows: Win+G (Xbox Bar) · Mac: Cmd+Shift+5 · All: OBS Studio</div>
-      <div style="font-size:.76rem;color:var(--text2);padding:8px 10px;background:var(--bg3);border-radius:8px;border:1px solid var(--border)"><b style="color:#fff;display:block;margin-bottom:3px">📝 Add context</b>Type what you were building and what went wrong — helps AI give more specific fixes</div>
-    </div>
-  </div>
+<aside id="aside"><div class="card"><div class="row" style="align-items:center;margin-bottom:6px" id="hh"></div>
+ <div class="mut" style="margin-bottom:8px">Missing a file? Tell the Helper. It goes Wizard, Designer, Coder, Reviewer, Tester, then adds the file to the current game.</div>
+ <textarea id="hin" style="width:100%;min-height:70px" placeholder="e.g. add a leaderboard script, or a Timer module"></textarea>
+ <div class="row" style="margin:8px 0"><button class="btn sm" id="hb" onclick="helper($('hin').value)">Send to Helper</button></div>
+ <div id="hlog"></div></div></aside>
 </div>
 
 <script>
-const BACKEND = "/api/chat";
-const VA_BACKEND = "/api/analyze-video";
-const VALIDATE_BACKEND = "/api/validate-lua";
-let G = {prompt:"",gamePlan:"",designOut:"",codeFiles:{},reviewReport:"",stopped:false,validation:null,fixed:{}};
-let _activeTab=0, _frames=[], _lastAnalysis="";
+const $=id=>document.getElementById(id);
+const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const ICONS={
+idea:["..aaaa..",".aawwaa.",".aawaaa.",".aaaaaa.","..aaaa..","...dd...","...dd...","..dddd.."],
+design:["......aa",".....aaa","....aaa.","...aaa..","..dda...",".dddd...",".ddd....","..d....."],
+code:["........","..a..a..",".a....a.","a..aa..a","a..aa..a",".a....a.","..a..a..","........"],
+review:["..aaaa..",".a....a.",".a....a.",".a....a.","..aaaa..","....ddd.",".....ddd","......dd"],
+wizard:["...a....","..aa....","..aaa...",".aaaaa..",".aawaa..","aaaaaaaa","dddddddd","........"],
+test:["..dddd..","...aa...","...aa...","..aaaa..",".aaaaaa.","aawaaaaa","aaaaaaaa",".aaaaaa."],
+ship:["..aaaa..",".aaaaaa.","aaaddaaa","aaaddaaa","aaaddaaa","aaaddaaa",".aaaaaa.",".dddddd."],
+help:[".aaaaaa.","aaaaaaaa","aawaawaa","aaaaaaaa",".aaaaaa.","..aa....",".a......","........"],
+pro:["...aa...","...aa...","aaaaaaaa",".aaaaaa.","..aaaa..","..aa.aa.",".aa...aa",".a.....a"]};
+function px(n,c){let r="";ICONS[n].forEach((row,y)=>[...row].forEach((ch,x)=>{if(ch===".")return;r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${ch==="a"?c:ch==="w"?"#fff":"#3a3a52"}"/>`}));
+ return `<svg class="px" viewBox="0 0 8 8" shape-rendering="crispEdges" style="animation-delay:-${((n.length*.37+c.length*.11)%2).toFixed(1)}s">${r}</svg>`}
+const ST=[
+{id:"idea",ic:"idea",col:"#f5a623",t:"Ideators",role:"Turn your one-line idea into a design doc: mechanics, map, enemy AI, scoring and game loop.",bots:[["MechanicsBot","Core gameplay + controls"],["MapBot","Arena layout + theme"],["AIBot","Enemy behaviour"],["ScoreBot","Points + win rules"],["LoopBot","Lobby, match, results"]]},
+{id:"design",ic:"design",col:"#4a9eff",t:"Designers",role:"Decide exactly what to build in Studio: folders, parts, player setup, UI and lighting.",bots:[["FolderBot","Explorer tree"],["PartBot","Map parts + sizes"],["PlayerBot","Speed, health, teams"],["GUIBot","Screen UI elements"],["LightBot","Lighting + mood"]]},
+{id:"code",ic:"code",col:"#7c6af5",t:"Coders",role:"Write one Lua script per system, each with its Studio location.",bots:[["GameManager","Rounds + scoring"],["NPCController","Enemy AI"],["PlayerCtrl","Input + effects"],["GUIScript","HUD + timer"],["MapBuilder","Builds the arena"]]},
+{id:"review",ic:"review",col:"#22d3a0",t:"Reviewers",role:"A real Lua parser checks syntax (auto-fixes once), then bots check placement and logic.",bots:[["SyntaxBot","Typos + bad API calls"],["PlacementBot","Server vs client"],["LogicBot","Does the loop work?"]]},
+{id:"wiz",ic:"wizard",col:"#d45aff",t:"Wizard Gate",role:"Explains every file in plain words. Nothing is tested until you approve.",bots:[["Wizard","Plain-language walkthrough"]]},
+{id:"test",ic:"test",col:"#f04060",t:"Testers",role:"Five testers score fun, bugs, balance, performance and UI clarity.",bots:[["FunBot","Fun"],["BugBot","Edge cases"],["BalanceBot","Fairness"],["PerfBot","Many players"],["UXBot","UI clarity"]]},
+{id:"ship",ic:"ship",col:"#22d3a0",t:"Ship + ProBot",role:"Ship it, and let ProBot list what you could add to make the game better.",bots:[["ProBot","Add-on ideas"]]}];
+const S=id=>ST.find(s=>s.id===id);
+const PARTS=[["Game loop and rounds",/PlayerAdded|round|match/i,"Add a GameManager script: rounds, win/lose, scoring"],["Enemy / NPC bots",/Pathfinding|Humanoid|NPC/i,"Add an NPC controller script for the enemies"],["Player controls",/UserInputService|Activated|Tool/i,"Add a player controller: input and weapon"],["Timer",/timer|countdown|time ?left|os\.clock|tick\(/i,"Add a match timer script (server) with a UI update"],["GUI elements",/ScreenGui|TextLabel|Frame/i,"Add a GUI script: health bar, score and timer"],["Map / arena",/Instance\.new\(["']Part|Terrain|Workspace/i,"Add a MapBuilder script that builds the arena"],["Score / leaderboard",/leaderstats|score/i,"Add a leaderboard / score script"],["Remote events",/RemoteEvent|FireClient|FireServer/i,"Add a Remotes setup script in ReplicatedStorage"]];
+const kind=p=>/ModuleScript|Modules/i.test(p)?"ModuleScript":/ServerScriptService|ServerStorage/.test(p)?"Script":"LocalScript";
+let GAMES=[],CUR=null,LA="",FR=[];
+let HP={st:[["Wizard","idle"],["Designer","idle"],["Coder","idle"],["Reviewer","idle"],["Tester","idle"]],msg:""};
+$("logo").innerHTML=px("wizard","#7c6af5")+"Roblox AI Studio";$("hh").innerHTML=px("help","#4a9eff")+"<b>Helper bot</b>";
 
-// ── detect AI ──
-(async()=>{
-  try{
-    const r=await fetch(BACKEND,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({system:"Reply READY",messages:[{role:"user",content:"ping"}],max_tokens:5})});
-    const raw=await r.text();
-    let d; try{d=JSON.parse(raw);}catch(e){
-      document.getElementById("aiLabel").textContent="AI offline — check keys";
-      document.getElementById("aiDot").style.background="var(--red)";
-      document.getElementById("aiDot").style.animation="none"; return;
-    }
-    if(!r.ok){
-      document.getElementById("aiLabel").textContent="AI offline — check keys";
-      document.getElementById("aiDot").style.background="var(--red)";
-      document.getElementById("aiDot").style.animation="none"; return;
-    }
-    const model=(d.model||"");
-    const shortName=model?model.split("/").pop().replace(":free",""):"";
-    document.getElementById("aiLabel").textContent=shortName?shortName+" ✓":"AI Ready ✓";
-    document.getElementById("aiDot").style.background=model.includes("gemini")?"var(--blue)":"var(--green)";
-  }catch(e){
-    document.getElementById("aiLabel").textContent="Cannot reach server";
-    document.getElementById("aiDot").style.background="var(--red)";
-    document.getElementById("aiDot").style.animation="none";
-  }
-})();
+async function ai(sys,user,max,g){
+ if(g&&g.stopped)throw new Error("Stopped");
+ let r;try{r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:sys,messages:[{role:"user",content:user}],max_tokens:max||1500})})}catch(e){throw new Error("Network error: is your deployment live?")}
+ const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(e){throw new Error("Server returned non-JSON (status "+r.status+"). Check Vercel function logs.")}
+ if(!r.ok)throw new Error(d.error||"API error "+r.status);
+ if(!d.content)throw new Error(d.error||"No content in response.");
+ return d.content.map(b=>b.text||"").join("");
+}
+async function validate(files){try{const r=await fetch("/api/validate-lua",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({files})});const d=await r.json();return r.ok&&d.results?d.results:null}catch(e){return null}}
+function parseV(t){const g=/GOOD:\s*([\s\S]*?)(?=RISKS:|$)/i.exec(t),r=/RISKS:\s*([\s\S]*?)(?=RECOMMEND:|$)/i.exec(t),c=/RECOMMEND:\s*(APPROVE|FIX)/i.exec(t);
+ const l=s=>s?s.split(/\n|;/).map(x=>x.replace(/^[\s*\-\d.]+/,"").trim()).filter(x=>x.length>2).slice(0,4):[];return{good:l(g&&g[1]),risks:l(r&&r[1]),rec:c?c[1].toUpperCase():"APPROVE"}}
+const code0=t=>t.replace(/```lua|```/gi,"").trim();
+function pg(id,el){document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));document.querySelectorAll(".nt").forEach(t=>t.classList.remove("on"));$("p-"+id).classList.add("on");el.classList.add("on");$("aside").style.display=id==="studio"?"":"none"}
 
-// ── helpers ──
-function showPage(id,tab){
-  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
-  document.querySelectorAll(".nav-tab").forEach(t=>t.classList.remove("active"));
-  document.getElementById("page-"+id).classList.add("active");
-  tab.classList.add("active");
-}
-function showEl(id){document.getElementById(id).style.display="block";}
-function tog(id){
-  document.getElementById("sb-"+id).classList.toggle("o");
-  document.getElementById("chev-"+id).classList.toggle("o");
-}
-function openS(id){
-  document.getElementById("sb-"+id).classList.add("o");
-  document.getElementById("chev-"+id).classList.add("o");
-  document.getElementById("stg-"+id).classList.add("active");
-}
-function doneS(id){
-  document.getElementById("stg-"+id).classList.remove("active");
-  document.getElementById("stg-"+id).classList.add("done");
-}
-function bdg(id,t,c){const b=document.getElementById("badge-"+id);b.textContent=t;b.className="sbadge "+c;}
-function resetStages(){
-  ["ideators","designers","coders","reviewers","wizard","testers","final"].forEach(id=>{
-    const s=document.getElementById("stg-"+id);
-    s.classList.remove("active","done");
-    bdg(id,"Idle","idle");
-  });
-  document.getElementById("tact").style.display="none";
-  document.getElementById("tFBArea").style.display="none";
-  document.getElementById("wiz-content").textContent="Waiting...";
-  document.getElementById("fin-content").textContent="Approved files appear here...";
-  document.getElementById("out-testers").textContent="Awaiting approval...";
-  document.getElementById("tg-testers").innerHTML="";
-}
-function mkBots(cid,bots){
-  const c=document.getElementById(cid);c.innerHTML="";
-  bots.forEach(b=>{
-    const d=document.createElement("div");d.className="bc";d.id="bc-"+b.id;
-    d.innerHTML=`<div class="bn"><span class="bav" style="background:${b.col};color:#000">${b.ini}</span>${b.name}</div><div class="bst" id="bs-${b.id}">Idle</div>`;
-    c.appendChild(d);
-  });
-}
-function bst(id,text,thinking,done){
-  const s=document.getElementById("bs-"+id),c=document.getElementById("bc-"+id);
-  if(!s||!c)return;
-  s.textContent=text;
-  c.classList.toggle("thinking",!!thinking);
-  c.classList.toggle("done",!!done);
-  if(done)c.classList.remove("thinking");
-}
-function showErr(m){const e=document.getElementById("errBox");e.textContent="⚠ "+m;e.style.display="block";}
-function hideErr(){document.getElementById("errBox").style.display="none";}
-function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+// ---------- game state ----------
+function mk(idea){return{id:Date.now()+Math.random(),idea,prompt:idea,name:idea.slice(0,18),plan:"",design:"",files:{},parser:null,fixed:{},scores:[],v:{},st:{},bot:{},open:{},out:{},tab:"pipe",stopped:false,running:false,err:"",up:null,shipped:false}}
+const setS=(g,id,v)=>{g.st[id]=v;render()};
+const bs=(g,s,n,v)=>{g.bot[s+":"+n]=v;render()};
+function fan(g,sid,fn){return Promise.all(S(sid).bots.map(async(b,i)=>{bs(g,sid,b[0],"work");try{const r=await fn(b,i);bs(g,sid,b[0],"done");return r}catch(e){bs(g,sid,b[0],"err");throw e}}))}
+function go(){const i=$("gp").value.trim();if(!i)return;const g=mk(i);GAMES.push(g);CUR=g;run(g)}
+function sel(id){CUR=GAMES.find(g=>g.id==id);render()}
+function tg(id){const g=CUR,st=g.st[id]||"idle";g.open[id]=!(g.open[id]!==undefined?g.open[id]:(st==="run"||st==="wait"));render()}
+function jump(id){CUR.tab="pipe";CUR.open[id]=true;render();setTimeout(()=>{const e=$("s-"+id);e&&e.scrollIntoView({behavior:"smooth",block:"start"})},50)}
+async function run(g){g.running=true;g.err="";g.stopped=false;g.st={};g.bot={};g.out={};g.v={};g.files={};g.scores=[];g.parser=null;g.fixed={};g.up=null;g.shipped=false;render();
+ try{await s1(g);await s2(g);await s3(g);await s4(g);await s5(g)}catch(e){if(e.message!=="Stopped")g.err=e.message;const r=Object.keys(g.st).find(k=>g.st[k]==="run");if(r)g.st[r]="err"}
+ g.running=false;render()}
+function redo(){const g=CUR,f=prompt("What should change?");if(f)g.prompt=g.idea+". Also: "+f;run(g)}
 
-// ── Lua validation (calls /api/validate-lua) ──
-function filesList(){
-  return Object.entries(G.codeFiles).map(([p,c])=>({name:p,source:c}));
-}
-async function validateFiles(files){
-  try{
-    const r=await fetch(VALIDATE_BACKEND,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({files})});
-    const d=await r.json();
-    if(!r.ok||!d.results)return null;
-    return d.results;
-  }catch(e){
-    console.error("validation failed",e);
-    return null;
-  }
-}
-// Parse every file; for files that fail, ask the model to fix once using the parser error, then re-check.
-async function validateAndFix(){
-  G.fixed={};
-  let results=await validateFiles(filesList());
-  if(!results){G.validation=null;return;}
-  const bad=results.filter(r=>!r.syntaxOk);
-  if(bad.length){
-    await Promise.all(bad.map(async b=>{
-      if(G.stopped)return;
-      try{
-        const fixed=await ai(
-          "Expert Roblox Lua scripter. Fix the syntax error in this script. Use plain Lua syntax only (no type annotations, no continue). Output ONLY the full corrected Lua code, no markdown.",
-          `Parser error: ${b.error}\n\nCode:\n${G.codeFiles[b.name]}`,1200);
-        G.codeFiles[b.name]=fixed.replace(/```lua|```/gi,"").trim();
-        G.fixed[b.name]=true;
-      }catch(e){/* keep original if the fix call fails */}
-    }));
-    results=(await validateFiles(filesList()))||results;
-  }
-  G.validation={};
-  results.forEach(r=>{G.validation[r.name]=r;});
-}
-function parserSummary(){
-  if(!G.validation)return "Parser check unavailable (could not reach /api/validate-lua).";
-  return Object.values(G.validation).map(r=>{
-    let line=(r.syntaxOk?"✓ ":"✗ ")+r.name;
-    if(G.fixed[r.name])line+=" (auto-fixed once)";
-    if(!r.syntaxOk)line+=" — "+r.error;
-    if(r.warnings&&r.warnings.length)line+="\n    ⚠ "+r.warnings.join("; ");
-    return line;
-  }).join("\n");
-}
-function badgeText(p){
-  const r=G.validation&&G.validation[p];
-  if(!r)return "";
-  if(!r.syntaxOk)return "❌ syntax: "+r.error;
-  const prefix=G.fixed[p]?"🔧 auto-fixed · ":"";
-  return prefix+(r.warnings&&r.warnings.length?"⚠️ "+r.warnings.length+" warning(s)":"✅ parses");
-}
+async function s1(g){setS(g,"idea","run");
+ const R=["core gameplay mechanics and player controls","map layout, biomes and visual theme","NPC AI behavior and difficulty scaling","scoring, power-ups and win conditions","game loop: lobby, match, results flow"];
+ const res=await fan(g,"idea",(b,i)=>ai(`You are ${b[0]}, a Roblox designer expert in ${R[i]}. Max 3 sentences, Lua-specific.`,`Game: "${g.prompt}". Design the ${R[i]}.`,260,g));
+ const t=await ai("You are Lead Ideator. Merge the 5 inputs into a short Roblox game design doc with sections OVERVIEW, MECHANICS, MAP, AI, SCORING, LOOP. Then end with exactly:\nVERDICT\nGOOD: item; item\nRISKS: item; item\nRECOMMEND: APPROVE or FIX",`Game: "${g.prompt}"\n\n`+res.map((x,i)=>`[${S("idea").bots[i][0]}] ${x.trim()}`).join("\n\n"),900,g);
+ g.plan=t.split(/\bVERDICT\b/i)[0].trim();g.v.idea=parseV(t);
+ g.out.idea=res.map((x,i)=>`${S("idea").bots[i][0]}: ${x.trim()}`).join("\n\n")+"\n\n--- GAME PLAN ---\n"+g.plan;setS(g,"idea","done")}
 
-// ── safe AI call ──
-async function ai(system,user,max){
-  if(G.stopped)throw new Error("Stopped");
-  max=max||2000;
-  let r;
-  try{
-    r=await fetch(BACKEND,{method:"POST",headers:{"Content-Type":"application/json"},
-      body:JSON.stringify({system,messages:[{role:"user",content:user}],max_tokens:max})});
-  }catch(netErr){
-    throw new Error("Network error — is your Vercel deployment live?");
-  }
-  const raw=await r.text();
-  let d;
-  try{d=JSON.parse(raw);}
-  catch(e){
-    if(r.status===404)throw new Error("404: /api/chat not found. Make sure api/chat.js is in your GitHub repo root and redeploy.");
-    if(r.status===500)throw new Error("500 server error. Go to Vercel Dashboard → Functions → chat → Logs to see the issue.");
-    throw new Error("Server returned non-JSON (status "+r.status+"). Check Vercel Function Logs.");
-  }
-  if(!r.ok)throw new Error(d.error||"API error "+r.status);
-  if(!d.content)throw new Error(d.error||"No content in response. Check API keys in Vercel Environment Variables.");
-  return d.content.map(b=>b.text||"").join("");
-}
+async function s2(g){setS(g,"design","run");
+ const T=["Explorer folder structure: all folders, Models, Parts with exact names","Map Parts: Name, Size, Position, BrickColor, Material, Anchored","Player setup: WalkSpeed, MaxHealth, Teams, tools","ScreenGui: each element with Name, Class, Position, Size, Text (health, score, timer)","Lighting: TimeOfDay, Ambient, Brightness, fog"];
+ const res=await fan(g,"design",(b,i)=>ai(`You are ${b[0]}, a Roblox Studio designer. Give concrete values: exact names, sizes, positions.`,`Plan:\n${g.plan.slice(0,900)}\nTask: ${T[i]}`,380,g));
+ g.design=res.map((x,i)=>`== ${S("design").bots[i][0]} ==\n${x.trim()}`).join("\n\n");g.out.design=g.design;
+ const v=await ai("You review a Roblox Studio build sheet. Reply ONLY in this format:\nGOOD: item; item\nRISKS: item; item\nRECOMMEND: APPROVE or FIX","Plan:\n"+g.plan.slice(0,500)+"\n\nBuild sheet:\n"+g.design.slice(0,1500),200,g);g.v.design=parseV(v);setS(g,"design","done")}
 
-// ══════════ PIPELINE ══════════
-async function startPipeline(){
-  const p=document.getElementById("gamePrompt").value.trim();
-  if(!p)return;
-  G={prompt:p,gamePlan:"",designOut:"",codeFiles:{},reviewReport:"",stopped:false,validation:null,fixed:{}};
-  hideErr();
-  resetStages();
-  document.getElementById("startBtn").disabled=true;
-  document.getElementById("startBtn").textContent="Running...";
-  document.getElementById("succBanner").style.display="none";
-  try{await s1();await s2();await s3();await s4();await s5();}
-  catch(e){
-    if(e.message!=="Stopped")showErr(e.message);
-    document.getElementById("startBtn").disabled=false;
-    document.getElementById("startBtn").textContent="Generate Game ✦";
-  }
-}
+async function s3(g){setS(g,"code","run");
+ const F=[["ServerScriptService/GameManager","Game loop, rounds, match timer, scoring, RemoteEvents, win/lose."],["ServerScriptService/NPCController","Enemy spawning, PathfindingService chasing, Idle/Chase/Attack states, damage, respawn."],["StarterPlayerScripts/PlayerController","LocalScript: movement, weapon input, effects, RemoteEvent listeners."],["StarterGui/GameGui","LocalScript: health bar, score, match timer, messages via RemoteEvents."],["ServerScriptService/MapBuilder","Build the arena Parts at runtime."]];
+ await fan(g,"code",async(b,i)=>{const f=F[i];const c=await ai(`Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue, use task.wait/task.spawn, game:GetService(). Location: ${f[0]}. Output ONLY Lua code, no markdown.`,`Plan:\n${g.plan.slice(0,500)}\nDesign:\n${g.design.slice(0,400)}\nFile: ${f[0]}\nJob: ${f[1]}`,1200,g);g.files[f[0]]=code0(c)});
+ g.out.code=Object.entries(g.files).map(([p,c])=>`${p.split("/").join(" → ")}  (${kind(p)}, ${c.split("\n").length} lines)`).join("\n");setS(g,"code","done")}
 
-// S1 — Ideators
-async function s1(){
-  openS("ideators");bdg("ideators","Running...","run");
-  const bots=[
-    {id:"i1",name:"MechanicsBot",ini:"M",col:"#7c6af5"},
-    {id:"i2",name:"MapBot",ini:"MP",col:"#4a9eff"},
-    {id:"i3",name:"AIBot",ini:"AI",col:"#d45aff"},
-    {id:"i4",name:"ScoreBot",ini:"S",col:"#22d3a0"},
-    {id:"i5",name:"LoopBot",ini:"L",col:"#f5a623"},
-  ];
-  mkBots("bg-ideators",bots);
-  document.getElementById("out-ideators").textContent="⟳ Working...";
-  document.getElementById("cg-ideators").innerHTML="";
-  const aspects=[
-    {role:"core gameplay mechanics and player controls",emoji:"⚙️",ease:65,cx:55,diff:"Medium",pros:"Fun & balanced",cons:"Needs good physics"},
-    {role:"map layout, biomes and visual theme",emoji:"🗺️",ease:80,cx:35,diff:"Easy",pros:"Fast to prototype",cons:"Can feel repetitive"},
-    {role:"NPC AI behavior and difficulty scaling",emoji:"🤖",ease:40,cx:80,diff:"Hard",pros:"Very engaging",cons:"Complex state machines"},
-    {role:"scoring, power-ups and win conditions",emoji:"🏆",ease:60,cx:60,diff:"Medium",pros:"Rewarding progression",cons:"Needs balance testing"},
-    {role:"game loop: lobby, match, results flow",emoji:"🔄",ease:75,cx:40,diff:"Easy",pros:"Clear player journey",cons:"Limited replayability"},
-  ];
-  const results=await Promise.all(bots.map(async(bot,i)=>{
-    bst(bot.id,"Brainstorming...",true);
-    const res=await ai(`You are ${bot.name}, Roblox designer expert in ${aspects[i].role}. Be concise and Lua-specific. 3 sentences max.`,`Game: "${G.prompt}". Design for ${aspects[i].role}.`,240);
-    bst(bot.id,"✓ Done",false,true);
-    const a=aspects[i],tc=a.diff==="Easy"?"te":a.diff==="Hard"?"th":"tm";
-    const card=document.createElement("div");card.className="cc";
-    card.innerHTML=`<div class="ccv">${a.emoji}</div><div class="cct">${bot.name}</div>
-      <div class="ccb">${esc(res.trim().substring(0,105))}...</div>
-      <span class="tag ${tc}">${a.diff}</span>
-      <div style="font-size:.67rem;color:var(--text3);margin-top:4px">🛠 Ease ${a.ease}% · 🔥 Complexity ${a.cx}%</div>
-      <div style="font-size:.67rem;margin-top:3px"><span style="color:var(--green)">✓ ${a.pros}</span> &nbsp; <span style="color:var(--red)">✗ ${a.cons}</span></div>
-      <div style="font-size:.63rem;color:var(--text3);margin-top:5px;font-style:italic;border-top:1px solid var(--border);padding-top:4px">🎨 Image prompt: "Roblox ${esc(G.prompt)}, ${a.role}, low-poly 3D, colorful, bird-eye view"</div>`;
-    document.getElementById("cg-ideators").appendChild(card);
-    return `[${bot.name}]: ${res.trim()}`;
-  }));
-  bst("i1","Consolidating...",true);
-  const plan=await ai(`You are Lead Ideator. Merge 5 bot inputs into a Roblox game design doc. Sections: GAME OVERVIEW, CORE MECHANICS, MAP, AI/NPCS, SCORING & WIN, GAME LOOP.`,`Game: "${G.prompt}"\n\n${results.join("\n\n")}`,700);
-  bst("i1","✓ Done",false,true);
-  G.gamePlan=plan;
-  document.getElementById("out-ideators").textContent=plan;
-  bdg("ideators","✓ Done","done-b");doneS("ideators");
-}
+async function checkFiles(g){const list=()=>Object.entries(g.files).map(([n,s])=>({name:n,source:s}));
+ let res=await validate(list());if(!res){g.parser=null;return}
+ const bad=res.filter(r=>!r.syntaxOk);
+ if(bad.length){await Promise.all(bad.map(async b=>{try{const f=await ai("Expert Roblox Lua scripter. Fix the syntax error. Plain Lua only. Output ONLY the full corrected Lua code.",`Parser error: ${b.error}\n\nCode:\n${g.files[b.name]}`,1200,g);g.files[b.name]=code0(f);g.fixed[b.name]=true}catch(e){}}));res=(await validate(list()))||res}
+ g.parser={};res.forEach(r=>g.parser[r.name]=r)}
+const anatomy=g=>PARTS.map(p=>({n:p[0],hint:p[2],f:Object.entries(g.files).filter(([k,c])=>p[1].test(c)||p[1].test(k)).map(([k])=>k.split("/").pop())}));
 
-// S2 — Designers
-async function s2(){
-  openS("designers");bdg("designers","Running...","run");
-  const bots=[
-    {id:"d1",name:"FolderBot",ini:"F",col:"#7c6af5"},{id:"d2",name:"PartBot",ini:"P",col:"#4a9eff"},
-    {id:"d3",name:"PlayerBot",ini:"PL",col:"#22d3a0"},{id:"d4",name:"GUIBot",ini:"G",col:"#d45aff"},
-    {id:"d5",name:"LightBot",ini:"LT",col:"#f5a623"},
-  ];
-  mkBots("bg-designers",bots);
-  document.getElementById("out-designers").textContent="⟳ Designing...";
-  const tasks=["Explorer folder structure — all folders, Models, Parts with exact names",
-    "Map Parts: Name, Size Vector3, Position Vector3, BrickColor, Material, Anchored",
-    "Player setup: WalkSpeed, MaxHealth, Teams, StarterPack tools",
-    "ScreenGui: each element with Name, Class, Position UDim2, Size UDim2, Text",
-    "Lighting: TimeOfDay, Ambient RGB, Brightness, FogEnd, Bloom, ColorCorrection"];
-  const outs=await Promise.all(bots.map(async(bot,i)=>{
-    bst(bot.id,"Designing...",true);
-    const res=await ai(`You are ${bot.name}, Roblox Studio designer. Give concrete Studio values — actual names, sizes, positions.`,`Plan:\n${G.gamePlan}\nTask: ${tasks[i]}`,380);
-    bst(bot.id,"✓ Done",false,true);
-    return `=== ${bot.name} ===\n${res.trim()}`;
-  }));
-  G.designOut=outs.join("\n\n");
-  document.getElementById("out-designers").textContent=G.designOut;
-  bdg("designers","✓ Done","done-b");doneS("designers");
-}
+async function s4(g){setS(g,"review","run");const bots=S("review").bots;bots.forEach(b=>g.bot["review:"+b[0]]="work");render();
+ await checkFiles(g);
+ const all=Object.entries(g.files).map(([p,c])=>`-- ${p}\n${c}`).join("\n---\n").slice(0,3500);
+ const P=["SyntaxBot: list Lua syntax errors, undefined variables and bad API calls in the code below, with file and fix. If none, say none.","PlacementBot: check server vs client placement. Server scripts must not touch LocalPlayer or UI; LocalScripts cannot use server-only APIs. List problems.","LogicBot: check gameplay logic: does the loop work, win/lose trigger, enemy chase? List gaps."];
+ const R=await Promise.all(P.map(async(p,i)=>{const r=await ai(p+" Judge only the excerpt given.","Code excerpt:\n"+all,360,g);bs(g,"review",bots[i][0],"done");return r.trim()}));
+ const pr=g.parser?Object.values(g.parser).map(r=>`${r.syntaxOk?"OK  ":"FAIL"} ${r.name}${g.fixed[r.name]?" (auto-fixed once)":""}${r.syntaxOk?"":" - "+r.error}${r.warnings&&r.warnings.length?"\n     warn: "+r.warnings.join("; "):""}`).join("\n"):"Parser check unavailable (could not reach /api/validate-lua).";
+ g.out.review="PARSER\n"+pr+"\n\nSyntaxBot:\n"+R[0]+"\n\nPlacementBot:\n"+R[1]+"\n\nLogicBot:\n"+R[2];
+ const bad=g.parser?Object.values(g.parser).filter(r=>!r.syntaxOk).length:0,warn=g.parser?Object.values(g.parser).reduce((n,r)=>n+(r.warnings?r.warnings.length:0),0):0,miss=anatomy(g).filter(a=>!a.f.length).map(a=>a.n);
+ g.v.review={good:g.parser?[`${Object.keys(g.files).length-bad} of ${Object.keys(g.files).length} scripts parse`,Object.keys(g.fixed).length?"auto-fixed "+Object.keys(g.fixed).length+" file(s)":"no syntax errors found"]:["parser offline: bots only"],risks:[bad?bad+" file(s) still fail to parse":"",warn?warn+" Roblox API warning(s)":"",!g.parser?"syntax not machine-checked":""].filter(Boolean),rec:bad||!g.parser?"FIX":"APPROVE"};
+ g.v.code={good:[Object.keys(g.files).length+" scripts with locations and script types"],risks:miss.length?["Missing parts: "+miss.join(", ")+" (use the Helper)"]:["All 8 core parts detected (by keyword scan)"],rec:miss.length>2?"FIX":"APPROVE"};
+ setS(g,"review","done")}
 
-// S3 — Coders
-async function s3(){
-  openS("coders");bdg("coders","Running...","run");
-  const bots=[
-    {id:"c1",name:"GameManager",ini:"GM",col:"#7c6af5"},{id:"c2",name:"NPCController",ini:"NPC",col:"#d45aff"},
-    {id:"c3",name:"PlayerCtrl",ini:"PC",col:"#4a9eff"},{id:"c4",name:"GUIScript",ini:"GUI",col:"#22d3a0"},
-    {id:"c5",name:"MapBuilder",ini:"MB",col:"#f5a623"},
-  ];
-  mkBots("bg-coders",bots);
-  document.getElementById("out-coders").textContent="⟳ Writing Lua...";
-  const scripts=[
-    {path:"ServerScriptService/GameManager",desc:"Game loop, round management, scoring, RemoteEvents, win/lose logic, Players events."},
-    {path:"ServerScriptService/NPCController",desc:"NPC spawning, PathfindingService chasing, state machine (Idle/Chase/Attack), Humanoid damage, respawn."},
-    {path:"StarterPlayerScripts/PlayerController",desc:"LocalScript: movement, tool input, VFX, UserInputService, RemoteEvent listeners."},
-    {path:"StarterGui/GameGui",desc:"LocalScript: health bar, score, timer, kill feed, messages via RemoteEvents."},
-    {path:"ServerScriptService/MapBuilder",desc:"Build map Parts at runtime: Instance.new, Position, Size, BrickColor, Material, Anchor."},
-  ];
-  await Promise.all(bots.map(async(bot,i)=>{
-    bst(bot.id,"Writing Lua...",true);
-    const sc=scripts[i];
-    const code=await ai(`Expert Roblox Lua scripter. Write COMPLETE RUNNABLE Lua. Use proper Roblox APIs with comments. Use plain Lua syntax only: no type annotations, no continue, use task.wait/task.spawn instead of wait/spawn, and game:GetService() for services. Location: ${sc.path}. Output ONLY Lua code, no markdown.`,`Plan:\n${G.gamePlan.substring(0,480)}\nDesign:\n${G.designOut.substring(0,380)}\nFile: ${sc.path}\nJob: ${sc.desc}`,1200);
-    bst(bot.id,"✓ Done",false,true);
-    G.codeFiles[sc.path]=code.replace(/```lua|```/gi,"").trim();
-    const cur=document.getElementById("out-coders");
-    cur.textContent=(cur.textContent.startsWith("⟳")?"":cur.textContent)+`[${sc.path}] — ${G.codeFiles[sc.path].split("\n").length} lines\n`;
-  }));
-  bdg("coders","✓ Done","done-b");doneS("coders");
-}
+async function s5(g){setS(g,"wiz","run");g.bot["wiz:Wizard"]="work";render();
+ const ex=Object.entries(g.files).map(([p,c])=>`FILE ${p} (${kind(p)})\n${c.slice(0,450)}`).join("\n\n");
+ const t=await ai("You are the Wizard. In plain language for a beginner, explain what each file does, where it goes in Studio and what to watch for. Use ONLY the code excerpts given and never say you have not seen the code. End with: RECOMMENDATION: APPROVE or NEEDS CHANGES.",`Game: "${g.idea}"\n\n${ex}\n\nReview notes:\n${g.out.review.slice(0,600)}`,700,g);
+ g.out.wiz=t.trim();g.bot["wiz:Wizard"]="done";setS(g,"wiz","wait")}
+function wizBox(g){return `<div class="lbl">Verdict checklist from earlier steps</div><ul class="chk">${["idea","design","code","review"].map(i=>g.v[i]?`<li><b class="${g.v[i].rec}">${g.v[i].rec}</b> ${S(i).t}: ${esc((g.v[i].risks[0]||g.v[i].good[0]||""))}</li>`:"").join("")}</ul><div class="act"><button class="btn gr" onclick="approve()">Approve, run testers</button><button class="btn rd" onclick="redo()">Request changes</button></div>`}
+async function approve(){const g=CUR;g.st.wiz="done";g.open.test=true;g.running=true;render();
+ try{await s6(g)}catch(e){if(e.message!=="Stopped"){g.err=e.message;g.st.test="err"}}g.running=false;render()}
+async function s6(g){setS(g,"test","run");
+ const F=["fun factor and engagement","bugs and edge cases","game balance and scoring","performance with 12+ players","UX and GUI clarity"];
+ const sample=Object.entries(g.files).map(([p,c])=>`--${p}\n${c.slice(0,500)}`).join("\n---\n");
+ const res=await fan(g,"test",(b,i)=>ai(`You are ${b[0]}, a Roblox tester for ${F[i]}. The code is shown as excerpts, so judge only what you can see and do not penalise the excerpting. FIRST LINE must be "Score: X/10". Then 2 sentences of specific feedback and one suggestion.`,`Game: "${g.idea}"\nPlan:\n${g.plan.slice(0,300)}\nCode:\n${sample.slice(0,2200)}`,230,g));
+ g.scores=res.map((t,i)=>{const m=t.match(/Score:\s*(\d+)/i);return{n:S("test").bots[i][0],s:m?+m[1]:7,fb:t.replace(/Score:\s*\d+\/10\s*/i,"").trim()}});
+ const avg=g.scores.reduce((a,x)=>a+x.s,0)/g.scores.length,lo=g.scores.slice().sort((a,b)=>a.s-b.s)[0],hi=g.scores.slice().sort((a,b)=>b.s-a.s)[0];
+ g.v.test={good:[`average score ${avg.toFixed(1)}/10`,`${hi.n}: ${hi.fb.split(/(?<=[.!?])\s/)[0]}`],risks:[`${lo.n} (${lo.s}/10): ${lo.fb.split(/(?<=[.!?])\s/)[0]}`],rec:avg>=7&&lo.s>=4?"APPROVE":"FIX"};
+ g.st.test="wait";g.st.ship="wait";render()}
+function ship(){const g=CUR;g.stopped=true;g.shipped=true;g.st.test="done";g.st.ship="done";g.tab="files";render()}
+async function pro(){const g=CUR;g.bot["ship:ProBot"]="work";render();
+ try{const t=await ai("You are ProBot. Suggest 6 concrete add-ons that would make this Roblox game better (power-ups, progression, juice, monetisation-safe features, polish). One per line, format: TITLE | impact (High/Med/Low) | effort (Easy/Med/Hard) | one sentence.",`Game: ${g.idea}\nPlan:\n${g.plan.slice(0,700)}\nFiles: ${Object.keys(g.files).join(", ")}`,500);
+  g.up=t.split("\n").filter(l=>l.split("|").length>=4).slice(0,6).map(l=>l.split("|").map(x=>x.replace(/^[\s\d.*-]+/,"").trim()));g.bot["ship:ProBot"]="done"}catch(e){g.err=e.message;g.bot["ship:ProBot"]="err"}render()}
+const shipBox=g=>(g.shipped?`<div class="vd APPROVE"><div class="h">Shipped. All bots stopped. Copy the scripts from the Files tab.</div></div>`:"")+`<div class="act"><button class="btn ol sm" onclick="pro()">${g.up?"Re-run":"Run"} ProBot</button></div>`+(g.up?`<div class="up">${g.up.map(u=>`<div><b>${esc(u[0])}</b>${esc(u[1])} impact · ${esc(u[2])} effort<br>${esc(u[3])}</div>`).join("")}</div>`:"");
 
-// S4 — Reviewers (parser check + auto-fix, then AI reviewers)
-async function s4(){
-  openS("reviewers");bdg("reviewers","Running...","run");
-  const bots=[
-    {id:"r1",name:"SyntaxBot",ini:"SY",col:"#7c6af5"},
-    {id:"r2",name:"PlacementBot",ini:"PL",col:"#4a9eff"},
-    {id:"r3",name:"LogicBot",ini:"LG",col:"#22d3a0"},
-  ];
-  mkBots("bg-reviewers",bots);
-  document.getElementById("out-reviewers").textContent="⟳ Parsing Lua, fixing syntax errors...";
-  bst("r1","Parsing Lua...",true);
-  await validateAndFix();
-  const allCode=Object.entries(G.codeFiles).map(([p,c])=>`-- ${p}\n${c}`).join("\n---\n").substring(0,3000);
-  document.getElementById("out-reviewers").textContent="Parser check:\n"+parserSummary()+"\n\n⟳ Reviewing...";
-  bots.forEach(b=>bst(b.id,"Reviewing...",true));
-  const [r1,r2,r3]=await Promise.all([
-    ai("SyntaxBot: Check Lua syntax errors, undefined vars, bad API calls. List each issue with file and fix.",`Code:\n${allCode}`,360),
-    ai("PlacementBot: Check script locations. Server scripts must not do client things. LocalScripts can't use server-only APIs.",`Code:\n${allCode}`,360),
-    ai("LogicBot: Check gameplay logic — does the loop work? Win/lose trigger? AI chase? List gaps.",`Plan:\n${G.gamePlan.substring(0,280)}\nCode:\n${allCode.substring(0,1800)}`,360),
-  ]);
-  bots.forEach(b=>bst(b.id,"✓ Done",false,true));
-  G.reviewReport=`Parser check (luaparse):\n${parserSummary()}\n\nSyntaxBot:\n${r1.trim()}\n\nPlacementBot:\n${r2.trim()}\n\nLogicBot:\n${r3.trim()}`;
-  document.getElementById("out-reviewers").textContent=G.reviewReport;
-  bdg("reviewers","✓ Done","done-b");doneS("reviewers");
-}
+// ---------- helper bot ----------
+async function helper(text){text=(text||"").trim();const g=CUR;if(!g||!text){HP.msg="Generate a game first, then describe the missing file.";return render()}
+ HP.st.forEach(s=>s[1]="idle");HP.msg="";render();$("hb").disabled=true;const step=(i,v)=>{HP.st[i][1]=v;render()};
+ const ctx=`Game: ${g.idea}\nExisting files: ${Object.keys(g.files).join(", ")}\nPlan:\n${g.plan.slice(0,500)}`;
+ try{step(0,"run");const w=await ai("You are the Wizard. Decide the single file to add. Reply exactly:\nPATH: ServiceName/FileName\nPURPOSE: one sentence",ctx+"\nRequest: "+text,150);
+  const path=((/PATH:\s*([^\n]+)/i.exec(w)||[])[1]||"ServerScriptService/NewScript").replace(/\.lua$/i,"").replace(/[`*]/g,"").trim();step(0,"done");
+  step(1,"run");const d=await ai("You are the Designer. List the objects, RemoteEvents, services and exact names this script needs. Concrete and short.",ctx+"\nFile: "+path+"\n"+w,300);step(1,"done");
+  step(2,"run");let c=code0(await ai(`Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue, use task.wait, game:GetService(). Location: ${path}. Output ONLY Lua code.`,ctx+"\n"+w+"\nDesign:\n"+d,1200));step(2,"done");
+  step(3,"run");const r=await validate([{name:path,source:c}]);if(r&&r[0]&&!r[0].syntaxOk){c=code0(await ai("Fix the syntax error. Plain Lua only. Output ONLY the corrected Lua code.","Error: "+r[0].error+"\n\n"+c,1200));g.fixed[path]=true}step(3,"done");
+  step(4,"run");const t=await ai("You are a tester. Reply 'Score: X/10' then one sentence.","Code:\n"+c.slice(0,1500));step(4,"done");
+  g.files[path]=c;const v=await validate([{name:path,source:c}]);if(v&&v[0]){g.parser=g.parser||{};g.parser[path]=v[0]}
+  HP.msg=`Added ${path}. Tester: ${t.trim().slice(0,160)}`;g.tab="files";$("hin").value=""}
+ catch(e){const i=HP.st.findIndex(s=>s[1]==="run");if(i>=0)HP.st[i][1]="err";HP.msg=e.message}
+ $("hb").disabled=false;render()}
 
-// S5 — Wizard
-async function s5(){
-  openS("wizard");bdg("wizard","Awaiting your approval","wait");
-  document.getElementById("stg-wizard").classList.add("active");
-  const summary=await ai("Wizard: explain each file in plain language — what it does, key vars/services, flag review concerns. End: RECOMMENDATION: APPROVE or NEEDS CHANGES.",`Game: "${G.prompt}"\nFiles: ${Object.keys(G.codeFiles).join(", ")}\nReview:\n${G.reviewReport.substring(0,500)}\nPlan:\n${G.gamePlan.substring(0,280)}`,700);
-  document.getElementById("wiz-content").innerHTML=`
-    <div class="wbox">
-      <div class="wt">🧙 Wizard — every file explained before you approve</div>
-      <div class="ws">${esc(summary)}</div>
-      ${Object.entries(G.codeFiles).map(([p,c])=>`
-        <div class="fc">
-          <div class="fch"><span class="fp">📄 ${esc(p)}.lua</span><span style="color:var(--text3);text-align:right">${esc(badgeText(p))}${badgeText(p)?" · ":""}${c.split("\n").length} lines</span></div>
-          <div class="fcb">${esc(c.substring(0,280))}${c.length>280?"\n-- ... full code in Final Files":""}</div>
-        </div>`).join("")}
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:11px">
-        <button class="btn btn-green" onclick="runTesters()">✓ Approve → Run Testers</button>
-        <button class="btn btn-red" onclick="showEl('wzFBArea')">✗ Request changes</button>
-      </div>
-      <div id="wzFBArea" style="display:none;margin-top:9px">
-        <div class="fbrow">
-          <input type="text" id="wzFBInput" placeholder="What to change — e.g. add 3 rounds, faster NPCs, power-ups..."/>
-          <button class="btn btn-primary btn-sm" onclick="rerun('w')">Rerun ✦</button>
-        </div>
-      </div>
-    </div>`;
-}
+// ---------- render ----------
+const vd=v=>`<div class="vd ${v.rec}"><div class="h">Verdict: ${v.rec==="APPROVE"?"APPROVE":"FIX BEFORE APPROVING"}</div><div class="c"><div><h5>What is good</h5><ul>${v.good.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>-</li>"}</ul></div><div><h5>Watch out</h5><ul>${v.risks.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>nothing major</li>"}</ul></div></div></div>`;
+function stg(g,s){const st=g.st[s.id]||"idle",op=g.open[s.id]!==undefined?g.open[s.id]:(st==="run"||st==="wait"),lab={idle:"Waiting",run:"Working",wait:"Needs you",done:"Done",err:"Error"}[st];
+ let b=`<p class="role">${esc(s.role)}</p><div class="bots">${s.bots.map(x=>{const k=g.bot[s.id+":"+x[0]]||"idle";return `<div class="bc ${k}"><i></i><b>${x[0]}</b><span>${esc(x[1])}</span></div>`}).join("")}</div>`;
+ if(g.out[s.id])b+=`<div class="lbl">Output</div><pre class="out">${esc(g.out[s.id])}</pre>`;
+ if(s.id==="test"&&g.scores.length)b+=`<div class="sc">${g.scores.map(x=>`<div class="sk"><b class="${x.s>=8?"g":x.s>=5?"a":"r"}">${x.s}/10</b><h6>${x.n}</h6>${esc(x.fb)}</div>`).join("")}</div>`;
+ if(g.v[s.id])b+=vd(g.v[s.id]);
+ if(s.id==="wiz"&&st==="wait")b+=wizBox(g);
+ if(s.id==="test"&&st==="wait")b+=`<div class="act"><button class="btn gr" onclick="ship()">Ship it (stops all bots)</button><button class="btn rd" onclick="redo()">Needs changes</button></div>`;
+ if(s.id==="ship"&&(st==="wait"||st==="done"))b+=shipBox(g);
+ return `<div class="stg ${st}" id="s-${s.id}"><div class="sh" onclick="tg('${s.id}')">${px(s.ic,s.col)}<b>${s.t}</b><span class="bd ${st}">${lab}</span><em>${op?"▲":"▼"}</em></div><div class="sb ${op?"o":""}">${b}</div></div>`}
+function view(g){
+ const flow=ST.map((s,i)=>`<div class="fs ${g.st[s.id]||""}" onclick="jump('${s.id}')">${px(s.ic,s.col)}${s.t}</div>${i<ST.length-1?'<span class="ar">→</span>':""}`).join("");
+ const n=Object.keys(g.files).length,tabs=[["pipe","Pipeline"],["files","Files ("+n+")"],["anat","Anatomy"]].map(t=>`<div class="st ${g.tab===t[0]?"on":""}" onclick="CUR.tab='${t[0]}';render()">${t[1]}</div>`).join("");
+ let body="";
+ if(g.tab==="pipe")body=ST.map(s=>stg(g,s)).join("");
+ else if(g.tab==="files")body=n?Object.entries(g.files).map(([p,c],i)=>{const r=g.parser&&g.parser[p],badge=r?(r.syntaxOk?(r.warnings&&r.warnings.length?`<span class="chip w">${r.warnings.length} warning(s)</span>`:'<span class="chip ok">parses</span>'):`<span class="chip bad">${esc(r.error)}</span>`):"",fx=g.fixed[p]?'<span class="chip w">auto-fixed</span>':"";
+  return `<div class="file"><div class="crumb">${p.split("/").map(esc).join(' <em>→</em> ')} <em>→</em> <span class="chip">${kind(p)}</span>${badge}${fx}</div><pre class="code">${esc(c)}</pre><div class="row" style="margin-top:6px"><button class="btn ol sm" onclick="cp(${i})">Copy</button></div></div>`}).join("")+`<div class="row"><button class="btn ol" onclick="cpAll()">Copy all</button><button class="btn ol" onclick="dl()">Download .txt</button></div><div class="card" style="margin-top:.9rem"><div class="lbl">Put it in Studio</div><div class="mut">Follow each arrow path. ServerScriptService gets a Script. StarterPlayerScripts and StarterGui get a LocalScript (the GUI one goes inside a ScreenGui). Then press Play and watch Output. If something breaks, use the Video Analyzer.</div></div>`:`<div class="mut">No files yet.</div>`;
+ else body=n?anatomy(g).map(a=>`<div class="part"><b>${a.n}</b><span>${a.f.length?"in "+a.f.map(esc).join(", "):esc(a.hint)}</span>${a.f.length?'<span class="chip ok" style="flex:0">found</span>':`<button class="btn sm" onclick="helper('${a.hint.replace(/'/g,"")}')">Ask Helper</button>`}</div>`).join("")+`<div class="mut" style="margin-top:6px">Detection is a keyword scan, not a guarantee. It shows what to double-check.</div>`:`<div class="mut">Anatomy appears after the Coders finish.</div>`;
+ return (g.err?`<div class="err">${esc(g.err)}</div>`:"")+`<div class="flow">${flow}</div><div class="stabs">${tabs}</div>`+body}
+function render(){
+ $("gtabs").innerHTML=GAMES.map(g=>`<div class="gt ${g===CUR?"on":""}" onclick="sel(${g.id})">${px("code",g===CUR?"#7c6af5":"#6a6a85")}${esc(g.name)}${g.running?" ...":""}</div>`).join("");
+ $("gview").innerHTML=CUR?view(CUR):`<div class="mut">Describe a game above to start. Each game gets its own tab.</div>`;
+ $("hlog").innerHTML=HP.st.map(s=>`<div class="step ${s[1]}"><i></i>${s[0]}</div>`).join("")+(HP.msg?`<div class="mut" style="margin-top:6px">${esc(HP.msg)}</div>`:"")}
+const txt=g=>Object.entries(g.files).map(([p,c])=>`-- ===== ${p}.lua (${kind(p)}) =====\n${c}`).join("\n\n\n");
+function cp(i){const p=Object.keys(CUR.files)[i];navigator.clipboard.writeText(CUR.files[p])}
+function cpAll(){navigator.clipboard.writeText(txt(CUR))}
+function dl(){const a=document.createElement("a");a.href="data:text/plain;charset=utf-8,"+encodeURIComponent(txt(CUR));a.download=CUR.name.replace(/\W+/g,"_")+".txt";a.click()}
 
-// Testers
-async function runTesters(){
-  bdg("wizard","✓ Approved","done-b");doneS("wizard");
-  openS("testers");bdg("testers","Running...","run");
-  openS("final");renderFinal();
-  const defs=[
-    {id:"t1",name:"FunBot",ini:"F",col:"#22d3a0",focus:"fun factor and engagement"},
-    {id:"t2",name:"BugBot",ini:"B",col:"#f04060",focus:"bugs and edge cases"},
-    {id:"t3",name:"BalanceBot",ini:"BL",col:"#f5a623",focus:"game balance and scoring"},
-    {id:"t4",name:"PerfBot",ini:"P",col:"#4a9eff",focus:"performance with 12+ players"},
-    {id:"t5",name:"UXBot",ini:"U",col:"#d45aff",focus:"UX and GUI clarity"},
-  ];
-  const tc=document.getElementById("tg-testers");tc.innerHTML="";
-  defs.forEach(t=>{
-    const d=document.createElement("div");d.className="tc";d.id="tc-"+t.id;
-    d.innerHTML=`<div class="tsc" id="ts-${t.id}">--</div><div class="tn">${t.name}</div><div class="tf" id="tf-${t.id}">Analyzing...</div>`;
-    tc.appendChild(d);
-  });
-  document.getElementById("out-testers").textContent="⟳ Analyzing code...";
-  const sample=Object.entries(G.codeFiles).map(([p,c])=>`--${p}\n${c.substring(0,260)}`).join("\n---\n").substring(0,1300);
-  try{
-    const reports=await Promise.all(defs.map(async t=>{
-      const res=await ai(`You are ${t.name}, Roblox tester for ${t.focus}. FIRST LINE must be "Score: X/10". Then 2 sentences specific feedback and one suggestion.`,`Game: "${G.prompt}"\nPlan:\n${G.gamePlan.substring(0,260)}\nCode:\n${sample}`,210);
-      const m=res.match(/Score:\s*(\d+)/i);
-      const score=m?parseInt(m[1]):7;
-      const fb=res.replace(/Score:\s*\d+\/10\s*/i,"").trim().substring(0,120);
-      const el=document.getElementById("ts-"+t.id);
-      el.textContent=score+"/10";
-      el.className="tsc"+(score>=8?"":(score>=5?" mid":" low"));
-      document.getElementById("tf-"+t.id).textContent=fb;
-      return `[${t.name}] ${score}/10 — ${fb}`;
-    }));
-    document.getElementById("out-testers").textContent=reports.join("\n\n");
-    bdg("testers","✓ Your review needed","wait");
-    document.getElementById("tact").style.display="block";
-  }catch(e){
-    if(e.message!=="Stopped")showErr(e.message);
-  }
-}
+// ---------- video analyzer ----------
+function vid(f){if(!f)return;if(f.size>2e8){alert("Max 200MB");return}$("dt").textContent="Extracting frames...";
+ const v=document.createElement("video");v.preload="metadata";v.src=URL.createObjectURL(f);
+ v.onloadedmetadata=()=>{const d=v.duration,n=Math.min(8,Math.max(3,Math.floor(d/5))),ts=Array.from({length:n},(_,i)=>d/(n+1)*(i+1));FR=[];$("fstrip").innerHTML="";let k=0;
+  ts.forEach((t,i)=>{const c=document.createElement("canvas");c.width=320;c.height=200;const v2=document.createElement("video");v2.src=v.src;v2.currentTime=t;
+   v2.onseeked=()=>{c.getContext("2d").drawImage(v2,0,0,320,200);const u=c.toDataURL("image/jpeg",.72);FR[i]=u.split(",")[1];const im=document.createElement("img");im.src=u;$("fstrip").appendChild(im);
+    if(++k===ts.length){$("dt").textContent=k+" frames ready";$("vbtn").disabled=false}}})}}
+async function anl(){const o=$("aout"),b=$("vbtn"),e=$("verr");e.style.display="none";b.disabled=true;o.textContent="Analyzing...";
+ try{const r=await fetch("/api/analyze-video",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({frames:FR,context:$("vctx").value.trim()})});
+  const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(x){throw new Error("Video API not reachable. Check api/analyze-video.js is deployed.")}
+  if(!r.ok)throw new Error(d.error||"Analysis failed");LA=d.analysis;o.textContent=LA;$("vmod").textContent=d.model?"("+d.model+")":""}
+ catch(x){o.textContent="";e.textContent=x.message;e.style.display="block"}b.disabled=false}
 
-function excellentWork(){
-  G.stopped=true;
-  bdg("testers","✓ Shipped!","done-b");doneS("testers");
-  bdg("final","✓ Ready","done-b");doneS("final");
-  document.getElementById("succBanner").style.display="block";
-  document.getElementById("tact").style.display="none";
-  document.getElementById("startBtn").disabled=false;
-  document.getElementById("startBtn").textContent="Generate New Game ✦";
-  const banner=document.getElementById("succBanner");
-  const cols=["#7c6af5","#22d3a0","#f5a623","#f04060","#4a9eff","#d45aff","#fff"];
-  for(let i=0;i<70;i++){
-    const p=document.createElement("div");
-    p.style.cssText=`position:absolute;left:${Math.random()*100}%;top:-20px;width:${5+Math.random()*7}px;height:${5+Math.random()*7}px;background:${cols[Math.floor(Math.random()*cols.length)]};border-radius:${Math.random()>.5?"50%":"2px"};animation:confettiFall ${1.8+Math.random()*2}s ease-in ${Math.random()*1.5}s forwards;opacity:0`;
-    banner.appendChild(p);setTimeout(()=>p.remove(),5000);
-  }
-}
-
-async function rerun(src){
-  const wf=document.getElementById("wzFBInput"),tf=document.getElementById("tFBInput");
-  const fb=(src==="w"&&wf?wf.value.trim():tf?tf.value.trim():"")||"";
-  if(fb)G.prompt=G.prompt+". Also: "+fb;
-  G.codeFiles={};G.validation=null;G.fixed={};G.stopped=false;hideErr();
-  resetStages();
-  document.getElementById("startBtn").disabled=true;
-  try{await s1();await s2();await s3();await s4();await s5();}
-  catch(e){
-    if(e.message!=="Stopped")showErr(e.message);
-    document.getElementById("startBtn").disabled=false;
-    document.getElementById("startBtn").textContent="Generate Game ✦";
-  }
-}
-
-// Final files
-function renderFinal(){
-  const paths=Object.keys(G.codeFiles);
-  if(!paths.length){document.getElementById("fin-content").textContent="No files yet.";return;}
-  const fc=document.getElementById("fin-content");
-  const tabs=paths.map((p,i)=>`<div class="ftab${i===0?" active":""}" onclick="showTab(${i})">${esc(p.split("/").pop())}</div>`).join("");
-  const panels=paths.map((p,i)=>`<div id="cp-${i}" style="display:${i===0?"block":"none"}"><div style="font-size:.68rem;color:var(--text3);font-family:var(--mono);margin-bottom:6px">📄 ${esc(p)}.lua${badgeText(p)?" · "+esc(badgeText(p)):""}</div><div class="codeout">${esc(G.codeFiles[p])}</div></div>`).join("");
-  fc.innerHTML=`<div class="tabrow">${tabs}</div>${panels}
-    <div style="display:flex;gap:7px;flex-wrap:wrap;margin:10px 0">
-      <button class="btn btn-outline btn-sm" onclick="copyActive()">📋 Copy current</button>
-      <button class="btn btn-outline btn-sm" onclick="copyAll()">📋 Copy all</button>
-      <button class="btn btn-outline btn-sm" onclick="dlAll()">⬇ Download .txt</button>
-    </div>
-    <div class="howto"><h4>Paste into Roblox Studio</h4><ol>
-      <li>Open Roblox Studio → File → New → Baseplate</li>
-      <li>Open <b>View → Explorer</b> and <b>View → Output</b></li>
-      <li><code>ServerScriptService/X</code> → right-click ServerScriptService → Insert Object → <b>Script</b>, rename to X</li>
-      <li><code>StarterPlayerScripts/X</code> → expand StarterPlayer → right-click StarterPlayerScripts → Insert Object → <b>LocalScript</b></li>
-      <li><code>StarterGui/X</code> → right-click StarterGui → Insert Object → <b>ScreenGui</b> → add <b>LocalScript</b> inside it</li>
-      <li>Double-click each script, paste code, Ctrl+S</li>
-      <li>Press <b>Play</b> — watch Output for errors</li>
-      <li>If errors appear → screen-record it → use the <b>Video Analyzer tab</b></li>
-    </ol></div>`;
-  bdg("final","Ready","wait");
-}
-
-function showTab(i){
-  _activeTab=i;
-  document.querySelectorAll(".ftab").forEach((t,j)=>t.classList.toggle("active",i===j));
-  document.querySelectorAll("[id^='cp-']").forEach((p,j)=>p.style.display=i===j?"block":"none");
-}
-function copyActive(){const p=Object.keys(G.codeFiles)[_activeTab];if(!p)return;navigator.clipboard.writeText(G.codeFiles[p]).then(()=>alert("Copied: "+p.split("/").pop()));}
-function copyAll(){const a=Object.entries(G.codeFiles).map(([p,c])=>`-- ===== ${p}.lua =====\n${c}`).join("\n\n\n");navigator.clipboard.writeText(a).then(()=>alert("All scripts copied!"));}
-function dlAll(){const a=Object.entries(G.codeFiles).map(([p,c])=>`-- ===== ${p}.lua =====\n${c}`).join("\n\n\n");const el=document.createElement("a");el.href="data:text/plain;charset=utf-8,"+encodeURIComponent(a);el.download="roblox-game-scripts.txt";el.click();}
-
-// ══════════ VIDEO ANALYZER ══════════
-function handleDrop(e){
-  e.preventDefault();document.getElementById("dzone").classList.remove("over");
-  const f=e.dataTransfer.files[0];
-  if(f&&f.type.startsWith("video/"))handleVid(f);
-  else alert("Please drop a video file.");
-}
-function handleVid(file){
-  if(!file)return;
-  if(file.size>200*1024*1024){alert("File too large. Max 200MB.");return;}
-  document.getElementById("dtitle").textContent="✓ "+file.name;
-  document.getElementById("dicon").textContent="⏳";
-  extractFrames(file);
-}
-function extractFrames(file){
-  const video=document.createElement("video");
-  video.preload="metadata";
-  video.src=URL.createObjectURL(file);
-  video.onloadedmetadata=()=>{
-    const dur=video.duration;
-    const n=Math.min(8,Math.max(3,Math.floor(dur/5)));
-    const times=Array.from({length:n},(_,i)=>(dur/(n+1))*(i+1));
-    _frames=[];
-    const strip=document.getElementById("fstrip");strip.innerHTML="";
-    let done=0;
-    times.forEach((t,i)=>{
-      const canvas=document.createElement("canvas");canvas.width=320;canvas.height=200;
-      const ctx2=canvas.getContext("2d");
-      const v2=document.createElement("video");v2.src=video.src;v2.currentTime=t;
-      v2.onseeked=()=>{
-        ctx2.drawImage(v2,0,0,320,200);
-        const url=canvas.toDataURL("image/jpeg",0.72);
-        _frames[i]=url.split(",")[1];
-        const img=document.createElement("img");img.className="fthumb";img.src=url;strip.appendChild(img);
-        done++;
-        if(done===times.length){
-          document.getElementById("dicon").textContent="✅";
-          document.getElementById("dsub").textContent=done+" frames extracted — ready";
-          document.getElementById("fsection").style.display="block";
-          document.getElementById("fcount").textContent=done;
-          document.getElementById("analyzeBtn").disabled=false;
-        }
-      };
-    });
-  };
-}
-async function analyzeVid(){
-  if(!_frames.length){alert("No frames yet.");return;}
-  const ctx=document.getElementById("ctx").value.trim();
-  const out=document.getElementById("aout"),btn=document.getElementById("analyzeBtn"),vaErr=document.getElementById("vaErr");
-  vaErr.style.display="none";
-  btn.disabled=true;btn.textContent="⏳ Analyzing...";
-  out.innerHTML=`<div style="padding-top:20px;color:var(--text3)"><span class="spin"></span>AI is watching your recording...</div>`;
-  try{
-    const r=await fetch(VA_BACKEND,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({frames:_frames,context:ctx})});
-    const raw=await r.text();
-    let d;try{d=JSON.parse(raw);}catch(e){throw new Error("Video API not found. Check api/analyze-video.js is in your repo.");}
-    if(!r.ok)throw new Error(d.error||"Analysis failed");
-    _lastAnalysis=d.analysis;
-    out.textContent=d.analysis;
-    document.getElementById("vaModel").textContent="Gemini Vision";
-    document.getElementById("copyABtn").style.display="inline-flex";
-    document.getElementById("fuBtn").style.display="inline-flex";
-  }catch(e){
-    out.innerHTML=`<div style="color:var(--red)">⚠ ${esc(e.message)}</div>`;
-    vaErr.textContent="⚠ "+e.message;vaErr.style.display="block";
-  }
-  btn.disabled=false;btn.textContent="🔍 Analyze & Fix";
-}
-function copyA(){navigator.clipboard.writeText(_lastAnalysis).then(()=>alert("Copied!"));}
-async function sendFU(){
-  const q=document.getElementById("fuInput").value.trim();if(!q)return;
-  const out=document.getElementById("aout");
-  out.textContent+="\n\n── YOUR QUESTION ──\n"+q+"\n\n── AI RESPONSE ──\nThinking...";
-  try{
-    G.stopped=false;
-    const res=await ai("You are a Roblox Studio expert. Previous analysis: "+_lastAnalysis.substring(0,700)+"\nAnswer the follow-up question specifically.",q,550);
-    out.textContent=out.textContent.replace("Thinking...",res);
-  }catch(e){out.textContent+="\nError: "+e.message;}
-  document.getElementById("fuInput").value="";
-}
-</script>
-</body>
-</html>
+// ---------- boot ----------
+(async()=>{try{const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:"Reply READY",messages:[{role:"user",content:"ping"}],max_tokens:5})});const d=await r.json().catch(()=>null);
+ if(!r.ok||!d){$("ail").textContent="AI offline, check keys";$("aid").style.background="var(--rd)"}else $("ail").textContent="AI ready"}catch(e){$("ail").textContent="Cannot reach server";$("aid").style.background="var(--rd)"}})();
+render();
+</script></body></html>
