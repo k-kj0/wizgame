@@ -5,123 +5,97 @@
 :root{--bg:#09090f;--b2:#111119;--b3:#17171f;--bd:#252535;--bd2:#353550;--tx:#eaeaf5;--t2:#9090b0;--t3:#6a6a85;--ac:#7c6af5;--gr:#22d3a0;--am:#f5a623;--rd:#f04060;--bl:#4a9eff;--f:'Space Grotesk',sans-serif;--m:'JetBrains Mono',monospace}
 html{background:var(--bg);color:var(--tx);font:14px/1.6 var(--f)}
 .px{width:22px;height:22px;image-rendering:pixelated;flex-shrink:0;animation:bob 2s steps(4,end) infinite}
-@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
-@keyframes pl{50%{opacity:.5}}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}@keyframes pl{50%{opacity:.5}}
 .nav{display:flex;align-items:center;gap:6px;background:var(--b2);border-bottom:1px solid var(--bd);padding:0 1.2rem;position:sticky;top:0;z-index:50}
 .logo{font-weight:700;display:flex;gap:8px;align-items:center;padding:.8rem 1rem .8rem 0;margin-right:.5rem;border-right:1px solid var(--bd)}
 .nt{padding:.85rem 1rem;color:var(--t3);cursor:pointer;border-bottom:2px solid transparent;font-weight:500}.nt.on{color:var(--ac);border-color:var(--ac)}
-.ai{margin-left:auto;font-size:.75rem;background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:.35rem .7rem;display:flex;gap:6px;align-items:center}
-.ai i{width:7px;height:7px;border-radius:50%;background:var(--gr)}
+.ai{margin-left:auto;font-size:.75rem;background:var(--b3);border:1px solid var(--bd);border-radius:8px;padding:.35rem .7rem;display:flex;gap:6px;align-items:center}.ai i{width:7px;height:7px;border-radius:50%;background:var(--gr)}
 .wrap{display:grid;grid-template-columns:1fr 310px;gap:1.2rem;max-width:1280px;margin:0 auto;padding:1.4rem 1.2rem 4rem}
 @media(max-width:900px){.wrap{grid-template-columns:1fr}}
 .page{display:none}.page.on{display:block}
-h1{font-size:1.5rem;letter-spacing:-.02em}.sub{color:var(--t2);margin-bottom:1rem}
+h1{font-size:1.5rem}.sub{color:var(--t2);margin-bottom:1rem}
 .card{background:var(--b2);border:1px solid var(--bd);border-radius:14px;padding:1rem;margin-bottom:.9rem}
 .row{display:flex;gap:8px;flex-wrap:wrap}
-input,textarea{background:var(--b3);border:1px solid var(--bd2);border-radius:9px;padding:9px 12px;color:var(--tx);font:inherit;outline:none}
-input:focus,textarea:focus{border-color:var(--ac)}
-.btn{border:0;border-radius:9px;padding:9px 16px;font:600 .85rem var(--f);cursor:pointer;background:var(--ac);color:#fff}
-.btn:disabled{opacity:.4;cursor:not-allowed}.btn.gr{background:var(--gr);color:#000}.btn.rd{background:var(--rd)}.btn.ol{background:0;border:1px solid var(--bd2);color:var(--tx)}.btn.sm{padding:5px 11px;font-size:.76rem}
+input,textarea{background:var(--b3);border:1px solid var(--bd2);border-radius:9px;padding:9px 12px;color:var(--tx);font:inherit;outline:none}input:focus,textarea:focus{border-color:var(--ac)}
+.btn{border:0;border-radius:9px;padding:9px 16px;font:600 .85rem var(--f);cursor:pointer;background:var(--ac);color:#fff}.btn:disabled{opacity:.4;cursor:not-allowed}.btn.gr{background:var(--gr);color:#000}.btn.rd{background:var(--rd)}.btn.ol{background:0;border:1px solid var(--bd2);color:var(--tx)}.btn.sm{padding:5px 11px;font-size:.76rem}
 .err{background:rgba(240,64,96,.1);border:1px solid rgba(240,64,96,.35);color:var(--rd);border-radius:9px;padding:9px 13px;margin-bottom:.8rem;font-size:.82rem}
 .mut{color:var(--t3);font-size:.82rem}
-details.pain summary{cursor:pointer;font-weight:600}details.pain ul{margin:.6rem 0 0 1.1rem;color:var(--t2);font-size:.82rem}details.pain b{color:var(--tx)}
-.gtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.9rem}
-.gt{display:flex;gap:7px;align-items:center;padding:7px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--b2);cursor:pointer;font-size:.82rem}.gt.on{border-color:var(--ac);background:rgba(124,106,245,.12)}
+.gtabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.9rem}.gt{display:flex;gap:7px;align-items:center;padding:7px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--b2);cursor:pointer;font-size:.82rem}.gt.on{border-color:var(--ac);background:rgba(124,106,245,.12)}
 .flow{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:.9rem}
-.fs{display:flex;align-items:center;gap:6px;padding:6px 10px;border:1px solid var(--bd);border-radius:9px;background:var(--b2);font-size:.75rem;cursor:pointer;color:var(--t2)}
-.fs.run{border-color:var(--ac);animation:pl 1.4s infinite}.fs.done{border-color:var(--gr);color:var(--tx)}.fs.wait{border-color:var(--bl);color:var(--tx)}.fs.err{border-color:var(--rd)}
-.ar{color:var(--t3)}
-.stabs{display:flex;gap:4px;margin-bottom:.8rem;border-bottom:1px solid var(--bd)}
-.st{padding:8px 14px;cursor:pointer;color:var(--t3);border-bottom:2px solid transparent;font-weight:500}.st.on{color:var(--ac);border-color:var(--ac)}
-.stg{background:var(--b2);border:1px solid var(--bd);border-radius:13px;margin-bottom:.7rem;overflow:hidden}
-.stg.run{border-color:var(--ac)}.stg.done{border-color:var(--gr)}.stg.wait{border-color:var(--bl)}.stg.err{border-color:var(--rd)}
-.sh{display:flex;align-items:center;gap:10px;padding:11px 15px;cursor:pointer}.sh b{flex:1}.sh em{color:var(--t3);font-style:normal;font-size:.7rem}
-.bd{font-size:.64rem;font-weight:700;text-transform:uppercase;padding:3px 9px;border-radius:20px;border:1px solid var(--bd);color:var(--t3)}
-.bd.run{color:var(--ac);border-color:var(--ac)}.bd.done{color:var(--gr);border-color:var(--gr)}.bd.wait{color:var(--bl);border-color:var(--bl)}.bd.err{color:var(--rd);border-color:var(--rd)}
-.sb{display:none;padding:4px 15px 15px;border-top:1px solid var(--bd)}.sb.o{display:block}
-.role{color:var(--t2);font-size:.82rem;margin:.7rem 0}
-.lbl{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin:.7rem 0 5px}
+.fs{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:9px;font-size:.73rem;cursor:pointer;color:#1a1a24;font-weight:600;opacity:.5;border:2px solid transparent}.fs.run{opacity:1;animation:pl 1.4s infinite}.fs.done{opacity:1}.fs.wait{opacity:1;border-color:#fff}.fs.err{opacity:1;border-color:var(--rd)}.ar{color:var(--t3)}
+.stabs{display:flex;gap:4px;margin-bottom:.8rem;border-bottom:1px solid var(--bd)}.st{padding:8px 14px;cursor:pointer;color:var(--t3);border-bottom:2px solid transparent;font-weight:500}.st.on{color:var(--ac);border-color:var(--ac)}
+.stg{border:1px solid var(--bd);border-radius:13px;margin-bottom:.7rem;overflow:hidden;background:var(--b2)}.stg.err{border-color:var(--rd)}
+.sh{display:flex;align-items:center;gap:10px;padding:11px 15px;cursor:pointer;color:#1a1a24}.sh b{flex:1}.sh em{font-style:normal;font-size:.7rem}
+.bd{font-size:.64rem;font-weight:700;text-transform:uppercase;padding:3px 9px;border-radius:20px;background:rgba(0,0,0,.1);border:1px solid rgba(0,0,0,.25)}
+.sb{display:none;padding:4px 15px 15px}.sb.o{display:block}
+.role{color:var(--t2);font-size:.82rem;margin:.7rem 0}.lbl{font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--t3);margin:.7rem 0 5px}
 .bots{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px}
-.bc{background:var(--b3);border:1px solid var(--bd);border-radius:9px;padding:7px 10px;font-size:.74rem;position:relative}
-.bc i{position:absolute;right:9px;top:11px;width:7px;height:7px;border-radius:50%;background:var(--bd2)}
-.bc.work{border-color:var(--ac)}.bc.work i{background:var(--ac);animation:pl 1s infinite}.bc.done i{background:var(--gr)}.bc.err i{background:var(--rd)}
-.bc b{display:block}.bc span{color:var(--t2)}
-pre.out,pre.code{background:var(--b3);border:1px solid var(--bd);border-radius:9px;padding:10px;font:.72rem/1.7 var(--m);color:var(--t2);white-space:pre-wrap;max-height:260px;overflow:auto}
-pre.code{max-height:380px;background:var(--bg)}
-.vd{border:1px solid var(--bd2);border-left:4px solid var(--gr);border-radius:10px;padding:10px 13px;margin-top:.8rem;background:var(--b3)}.vd.FIX{border-left-color:var(--am)}
-.vd .h{font-weight:700;margin-bottom:6px}.vd.APPROVE .h{color:var(--gr)}.vd.FIX .h{color:var(--am)}
-.vd .c{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.78rem;color:var(--t2)}.vd h5{font-size:.66rem;text-transform:uppercase;color:var(--t3)}.vd ul{margin-left:1rem}
-.sc{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:.7rem}
-.sk{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:.76rem;color:var(--t2)}.sk b{font-size:1.3rem}.sk b.g{color:var(--gr)}.sk b.a{color:var(--am)}.sk b.r{color:var(--rd)}.sk h6{color:var(--tx);font-size:.78rem}
+.bc{background:var(--b3);border:1px solid var(--bd);border-radius:9px;padding:7px 10px;font-size:.74rem;position:relative}.bc i{position:absolute;right:9px;top:11px;width:7px;height:7px;border-radius:50%;background:var(--bd2)}
+.bc.work{border-color:var(--ac)}.bc.work i{background:var(--ac);animation:pl 1s infinite}.bc.done i{background:var(--gr)}.bc.err i{background:var(--rd)}.bc b{display:block}.bc span{color:var(--t2)}
+pre.out,pre.code{background:var(--b3);border:1px solid var(--bd);border-radius:9px;padding:10px;font:.72rem/1.7 var(--m);color:var(--t2);white-space:pre-wrap;max-height:260px;overflow:auto}pre.code{max-height:380px;background:var(--bg)}
+.ideas{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;margin-top:.7rem}
+.idc{background:var(--b3);border:1px solid var(--bd);border-radius:11px;padding:11px;font-size:.78rem;color:var(--t2);display:flex;flex-direction:column;gap:6px}.idc b{color:var(--tx);font-size:.86rem}.idc.sel{border-color:#e6b422;box-shadow:0 0 0 1px #e6b422}.idc p{flex:1}
+.vd{border:1px solid var(--bd2);border-left:4px solid var(--gr);border-radius:10px;padding:10px 13px;margin-top:.8rem;background:var(--b3)}.vd.FIX{border-left-color:var(--am)}.vd .h{font-weight:700;margin-bottom:6px}.vd.APPROVE .h{color:var(--gr)}.vd.FIX .h{color:var(--am)}
+.vd .c{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;font-size:.78rem;color:var(--t2)}.vd h5{font-size:.66rem;text-transform:uppercase;color:var(--t3)}.vd ul{margin-left:1rem}
+.sc{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;margin-top:.7rem}.sk{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:.76rem;color:var(--t2)}.sk b{font-size:1.3rem}.sk b.g{color:var(--gr)}.sk b.a{color:var(--am)}.sk b.r{color:var(--rd)}.sk h6{color:var(--tx);font-size:.78rem}
 .act{display:flex;gap:8px;flex-wrap:wrap;margin-top:.8rem}
-.chk{list-style:none;margin:.5rem 0;font-size:.8rem}.chk li{padding:4px 0;color:var(--t2)}.chk b.APPROVE{color:var(--gr)}.chk b.FIX{color:var(--am)}
+.cmp{width:100%;border-collapse:collapse;font-size:.8rem;margin-top:.7rem}.cmp td,.cmp th{border-bottom:1px solid var(--bd);padding:6px 8px;text-align:left}.up{color:var(--gr)}.dn{color:var(--rd)}
+.sketch{width:100%;max-width:560px;border:1px solid var(--bd2);border-radius:10px;background:#1b1b26;margin-top:6px}
 .file{margin-bottom:1rem}.crumb{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font:.76rem var(--m);margin-bottom:6px;color:var(--bl)}.crumb em{color:var(--t3);font-style:normal}
 .chip{font:600 .66rem var(--f);padding:2px 8px;border-radius:20px;background:rgba(124,106,245,.15);color:var(--ac)}.chip.ok{background:rgba(34,211,160,.15);color:var(--gr)}.chip.bad{background:rgba(240,64,96,.15);color:var(--rd)}.chip.w{background:rgba(245,166,35,.15);color:var(--am)}
 .part{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;margin-bottom:6px;background:var(--b3)}.part b{min-width:170px}.part span{flex:1;color:var(--t2);font-size:.78rem}
-.up{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:.7rem}.up div{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:.76rem;color:var(--t2)}.up b{color:var(--tx);display:block}
+.upg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:.7rem}.upg div{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:.76rem;color:var(--t2)}.upg b{color:var(--tx);display:block}
 aside .card{position:sticky;top:64px}.step{display:flex;gap:8px;align-items:center;font-size:.78rem;color:var(--t3);padding:3px 0}.step.run{color:var(--ac)}.step.done{color:var(--gr)}.step.err{color:var(--rd)}.step i{width:7px;height:7px;border-radius:50%;background:currentColor}
-.dz{border:2px dashed var(--bd2);border-radius:13px;padding:2rem;text-align:center;cursor:pointer;background:var(--b3)}.dz:hover{border-color:var(--ac)}
-.fstrip{display:flex;gap:5px;overflow-x:auto;margin-top:8px}.fstrip img{width:76px;height:48px;object-fit:cover;border-radius:5px;border:1px solid var(--bd)}
-.aout{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:14px;white-space:pre-wrap;min-height:180px;max-height:460px;overflow:auto;font-size:.82rem;color:var(--t2)}
+.dz{border:2px dashed var(--bd2);border-radius:13px;padding:2rem;text-align:center;cursor:pointer;background:var(--b3)}.fstrip{display:flex;gap:5px;overflow-x:auto;margin-top:8px}.fstrip img{width:76px;height:48px;object-fit:cover;border-radius:5px}
+.aout{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:14px;white-space:pre-wrap;min-height:160px;max-height:460px;overflow:auto;font-size:.82rem;color:var(--t2)}
 </style></head><body>
 <div class="nav"><div class="logo" id="logo"></div><div class="nt on" onclick="pg('studio',this)">Game Studio</div><div class="nt" onclick="pg('video',this)">Video Analyzer</div><div class="ai"><i id="aid"></i><span id="ail">Checking AI...</span></div></div>
-
-<div class="wrap">
-<main>
+<div class="wrap"><main>
 <div class="page on" id="p-studio">
- <h1>Game Studio</h1><div class="sub">One idea in. Planned, designed, coded, checked and tested, with a verdict at every step.</div>
- <details class="pain card"><summary>Why each step exists: common Roblox beginner pain points</summary><ul>
-  <li><b>Script in the wrong place:</b> every file shows its location as an arrow path plus its script type.</li>
-  <li><b>Server vs client mix-ups:</b> PlacementBot checks this, and the file type is always labelled.</li>
-  <li><b>Untested scripts:</b> a real Lua parser runs, then 5 testers score the game.</li>
-  <li><b>Messy, incomplete projects:</b> the Anatomy tab shows which parts exist and which are missing.</li>
-  <li><b>"AI fixed it but I learned nothing":</b> each stage explains what's good, what's risky and what to approve.</li></ul></details>
- <div class="card"><div class="row"><input id="gp" style="flex:1;min-width:200px" value="dodge cannon game" placeholder="Describe a game, e.g. zombie survival, obby with power-ups"><button class="btn" onclick="go()">Generate game</button></div></div>
+ <h1>Game Studio</h1><div class="sub">5 ideas, you pick one, it gets challenged and improved, then designed, coded, checked and tested.</div>
+ <div class="card"><div class="row"><input id="gp" style="flex:1;min-width:200px" value="dodge cannon game" placeholder="Describe a game theme, e.g. zombie survival, obby, tycoon"><button class="btn" onclick="go()">Suggest ideas</button></div></div>
  <div class="gtabs" id="gtabs"></div><div id="gview"></div>
 </div>
-
 <div class="page" id="p-video">
  <h1>Video Error Analyzer</h1><div class="sub">Record the Studio error, upload it, get a diagnosis and fix.</div>
  <div class="card"><div class="dz" onclick="$('vf').click()"><div id="dt">Click to upload a video (max 200MB)</div></div><input type="file" id="vf" accept="video/*" style="display:none" onchange="vid(this.files[0])"><div class="fstrip" id="fstrip"></div>
  <textarea id="vctx" style="width:100%;margin-top:8px;min-height:70px" placeholder="What were you building and what went wrong?"></textarea>
  <div class="row" style="margin-top:8px"><button class="btn" id="vbtn" onclick="anl()" disabled>Analyze and fix</button></div><div class="err" id="verr" style="display:none;margin-top:8px"></div></div>
- <div class="card"><div class="lbl">Analysis <span id="vmod"></span></div><div class="aout" id="aout">Upload a recording to begin.</div>
- <div class="row" style="margin-top:8px"><button class="btn ol sm" onclick="navigator.clipboard.writeText(LA)">Copy</button></div></div>
-</div>
-</main>
-
+ <div class="card"><div class="lbl">Analysis <span id="vmod"></span></div><div class="aout" id="aout">Upload a recording to begin.</div></div>
+</div></main>
 <aside id="aside"><div class="card"><div class="row" style="align-items:center;margin-bottom:6px" id="hh"></div>
- <div class="mut" style="margin-bottom:8px">Missing a file? Tell the Helper. It goes Wizard, Designer, Coder, Reviewer, Tester, then adds the file to the current game.</div>
- <textarea id="hin" style="width:100%;min-height:70px" placeholder="e.g. add a leaderboard script, or a Timer module"></textarea>
- <div class="row" style="margin:8px 0"><button class="btn sm" id="hb" onclick="helper($('hin').value)">Send to Helper</button></div>
- <div id="hlog"></div></div></aside>
-</div>
-
+ <div class="mut" style="margin-bottom:8px">Missing a file? The Helper goes Wizard, Designer, Coder, Reviewer, Tester, then adds it to the current game.</div>
+ <textarea id="hin" style="width:100%;min-height:70px" placeholder="e.g. add a leaderboard script"></textarea>
+ <div class="row" style="margin:8px 0"><button class="btn sm" id="hb" onclick="helper($('hin').value)">Send to Helper</button></div><div id="hlog"></div></div></aside></div>
 <script>
 const $=id=>document.getElementById(id);
 const esc=s=>String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const ICONS={
 idea:["..aaaa..",".aawwaa.",".aawaaa.",".aaaaaa.","..aaaa..","...dd...","...dd...","..dddd.."],
+ask:["..aaaa..",".aa..aa.","....aa..","...aa...","...aa...","........","...aa...","...aa..."],
+better:["...aa...","..aaaa..",".aaaaaa.","aaaaaaaa","...aa...","...aa...","...aa...","...aa..."],
 design:["......aa",".....aaa","....aaa.","...aaa..","..dda...",".dddd...",".ddd....","..d....."],
 code:["........","..a..a..",".a....a.","a..aa..a","a..aa..a",".a....a.","..a..a..","........"],
 review:["..aaaa..",".a....a.",".a....a.",".a....a.","..aaaa..","....ddd.",".....ddd","......dd"],
 wizard:["...a....","..aa....","..aaa...",".aaaaa..",".aawaa..","aaaaaaaa","dddddddd","........"],
 test:["..dddd..","...aa...","...aa...","..aaaa..",".aaaaaa.","aawaaaaa","aaaaaaaa",".aaaaaa."],
+fix:["..aa.aa.",".aaaaaa.",".aaaaa..","..aaa...","...dd...","...dd...","..dd....",".dd....."],
 ship:["..aaaa..",".aaaaaa.","aaaddaaa","aaaddaaa","aaaddaaa","aaaddaaa",".aaaaaa.",".dddddd."],
-help:[".aaaaaa.","aaaaaaaa","aawaawaa","aaaaaaaa",".aaaaaa.","..aa....",".a......","........"],
-pro:["...aa...","...aa...","aaaaaaaa",".aaaaaa.","..aaaa..","..aa.aa.",".aa...aa",".a.....a"]};
-function px(n,c){let r="";ICONS[n].forEach((row,y)=>[...row].forEach((ch,x)=>{if(ch===".")return;r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${ch==="a"?c:ch==="w"?"#fff":"#3a3a52"}"/>`}));
- return `<svg class="px" viewBox="0 0 8 8" shape-rendering="crispEdges" style="animation-delay:-${((n.length*.37+c.length*.11)%2).toFixed(1)}s">${r}</svg>`}
+help:[".aaaaaa.","aaaaaaaa","aawaawaa","aaaaaaaa",".aaaaaa.","..aa....",".a......","........"]};
+function px(n,c){let r="";ICONS[n].forEach((row,y)=>[...row].forEach((ch,x)=>{if(ch===".")return;r+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${ch==="a"?c:ch==="w"?"#fff":"#3a3a52"}"/>`}));return `<svg class="px" viewBox="0 0 8 8" shape-rendering="crispEdges" style="animation-delay:-${((n.length*.37+c.length*.11)%2).toFixed(1)}s">${r}</svg>`}
 const ST=[
-{id:"idea",ic:"idea",col:"#f5a623",t:"Ideators",role:"Turn your one-line idea into a design doc: mechanics, map, enemy AI, scoring and game loop.",bots:[["MechanicsBot","Core gameplay + controls"],["MapBot","Arena layout + theme"],["AIBot","Enemy behaviour"],["ScoreBot","Points + win rules"],["LoopBot","Lobby, match, results"]]},
-{id:"design",ic:"design",col:"#4a9eff",t:"Designers",role:"Decide exactly what to build in Studio: folders, parts, player setup, UI and lighting.",bots:[["FolderBot","Explorer tree"],["PartBot","Map parts + sizes"],["PlayerBot","Speed, health, teams"],["GUIBot","Screen UI elements"],["LightBot","Lighting + mood"]]},
-{id:"code",ic:"code",col:"#7c6af5",t:"Coders",role:"Write one Lua script per system, each with its Studio location.",bots:[["GameManager","Rounds + scoring"],["NPCController","Enemy AI"],["PlayerCtrl","Input + effects"],["GUIScript","HUD + timer"],["MapBuilder","Builds the arena"]]},
-{id:"review",ic:"review",col:"#22d3a0",t:"Reviewers",role:"A real Lua parser checks syntax (auto-fixes once), then bots check placement and logic.",bots:[["SyntaxBot","Typos + bad API calls"],["PlacementBot","Server vs client"],["LogicBot","Does the loop work?"]]},
-{id:"wiz",ic:"wizard",col:"#d45aff",t:"Wizard Gate",role:"Explains every file in plain words. Nothing is tested until you approve.",bots:[["Wizard","Plain-language walkthrough"]]},
-{id:"test",ic:"test",col:"#f04060",t:"Testers",role:"Five testers score fun, bugs, balance, performance and UI clarity.",bots:[["FunBot","Fun"],["BugBot","Edge cases"],["BalanceBot","Fairness"],["PerfBot","Many players"],["UXBot","UI clarity"]]},
-{id:"ship",ic:"ship",col:"#22d3a0",t:"Ship + ProBot",role:"Ship it, and let ProBot list what you could add to make the game better.",bots:[["ProBot","Add-on ideas"]]}];
+{id:"idea",ic:"idea",bg:"#fff6c2",col:"#b58900",t:"Ideators",role:"Five bots each pitch a different game idea (about 50 words, plain language). You choose one.",bots:[["ActionBot","Fast action + skill"],["PuzzleBot","Puzzle + strategy"],["CoopBot","Teamwork"],["GrindBot","Progress + collecting"],["PartyBot","Party + rounds"]]},
+{id:"ask",ic:"ask",bg:"#ffc2c2",col:"#d33",t:"Questioner",role:"Challenges your chosen idea: pros, cons and open questions.",bots:[["Questioner","Pros, cons, questions"]]},
+{id:"better",ic:"better",bg:"#e6b422",col:"#7a5c00",t:"Betterment",role:"Improves the chosen idea from the player's point of view, answering the cons.",bots:[["Betterment","Player-first rewrite"]]},
+{id:"design",ic:"design",bg:"#a9d4ff",col:"#2a6fb5",t:"Designers",role:"Decide what to build in Studio and draw a bird's-eye sketch of the arena.",bots:[["MapBot","Parts + layout"],["PlayerBot","Player + rules"],["UIBot","HUD + lighting"],["SketchBot","Bird's-eye image"]]},
+{id:"code",ic:"code",bg:"#c9bcff",col:"#5b45d6",t:"Coders",role:"Write one Lua script per system, each with its Studio location.",bots:[["GameManager","Rounds + scoring"],["NPCController","Enemy AI"],["PlayerCtrl","Input + effects"],["GUIScript","HUD + timer"],["MapBuilder","Builds the arena"]]},
+{id:"review",ic:"review",bg:"#9cf0d4",col:"#0e8a68",t:"Reviewers",role:"A real Lua parser checks syntax (auto-fixes once), then bots check placement and logic.",bots:[["SyntaxBot","Typos + bad API calls"],["PlacementBot","Server vs client"],["LogicBot","Does the loop work?"]]},
+{id:"wiz",ic:"wizard",bg:"#f1b3ff",col:"#a02fc0",t:"Wizard Gate",role:"Explains every file in plain words. Nothing is tested until you approve.",bots:[["Wizard","Plain-language walkthrough"]]},
+{id:"test",ic:"test",bg:"#ffc08a",col:"#c4601a",t:"Testers",role:"Five testers score fun, bugs, balance, performance and UI clarity.",bots:[["FunBot","Fun"],["BugBot","Edge cases"],["BalanceBot","Fairness"],["PerfBot","Many players"],["UXBot","UI clarity"]]},
+{id:"fix",ic:"fix",bg:"#ffa8b8",col:"#c0304f",t:"Fix Round",role:"After you click Fix issues: the Wizard delegates, Coders rewrite only the needed files, Testers re-score. Everything else stays the same.",bots:[["Wizard","Delegates the fixes"],["Coders","Rewrite those files"],["Testers","Re-score"]]},
+{id:"ship",ic:"ship",bg:"#b8f0a8",col:"#2d8a1c",t:"Ship + ProBot",role:"Ship it, and let ProBot list what you could add to make the game better.",bots:[["ProBot","Add-on ideas"]]}];
 const S=id=>ST.find(s=>s.id===id);
-const PARTS=[["Game loop and rounds",/PlayerAdded|round|match/i,"Add a GameManager script: rounds, win/lose, scoring"],["Enemy / NPC bots",/Pathfinding|Humanoid|NPC/i,"Add an NPC controller script for the enemies"],["Player controls",/UserInputService|Activated|Tool/i,"Add a player controller: input and weapon"],["Timer",/timer|countdown|time ?left|os\.clock|tick\(/i,"Add a match timer script (server) with a UI update"],["GUI elements",/ScreenGui|TextLabel|Frame/i,"Add a GUI script: health bar, score and timer"],["Map / arena",/Instance\.new\(["']Part|Terrain|Workspace/i,"Add a MapBuilder script that builds the arena"],["Score / leaderboard",/leaderstats|score/i,"Add a leaderboard / score script"],["Remote events",/RemoteEvent|FireClient|FireServer/i,"Add a Remotes setup script in ReplicatedStorage"]];
+const PARTS=[["Game loop and rounds",/PlayerAdded|round|match/i,"Add a GameManager script: rounds, win/lose, scoring"],["Enemy / NPC bots",/Pathfinding|Humanoid|NPC/i,"Add an NPC controller script for the enemies"],["Player controls",/UserInputService|Activated|Tool/i,"Add a player controller: input and weapon"],["Timer",/timer|countdown|time ?left|os\.clock|tick\(/i,"Add a match timer script with a UI update"],["GUI elements",/ScreenGui|TextLabel|Frame/i,"Add a GUI script: health bar, score and timer"],["Map / arena",/Instance\.new\(["']Part|Terrain|Workspace/i,"Add a MapBuilder script that builds the arena"],["Score / leaderboard",/leaderstats|score/i,"Add a leaderboard / score script"],["Remote events",/RemoteEvent|FireClient|FireServer/i,"Add a Remotes setup script in ReplicatedStorage"]];
 const kind=p=>/ModuleScript|Modules/i.test(p)?"ModuleScript":/ServerScriptService|ServerStorage/.test(p)?"Script":"LocalScript";
 let GAMES=[],CUR=null,LA="",FR=[];
 let HP={st:[["Wizard","idle"],["Designer","idle"],["Coder","idle"],["Reviewer","idle"],["Tester","idle"]],msg:""};
@@ -136,141 +110,150 @@ async function ai(sys,user,max,g){
  return d.content.map(b=>b.text||"").join("");
 }
 async function validate(files){try{const r=await fetch("/api/validate-lua",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({files})});const d=await r.json();return r.ok&&d.results?d.results:null}catch(e){return null}}
-function parseV(t){const g=/GOOD:\s*([\s\S]*?)(?=RISKS:|$)/i.exec(t),r=/RISKS:\s*([\s\S]*?)(?=RECOMMEND:|$)/i.exec(t),c=/RECOMMEND:\s*(APPROVE|FIX)/i.exec(t);
- const l=s=>s?s.split(/\n|;/).map(x=>x.replace(/^[\s*\-\d.]+/,"").trim()).filter(x=>x.length>2).slice(0,4):[];return{good:l(g&&g[1]),risks:l(r&&r[1]),rec:c?c[1].toUpperCase():"APPROVE"}}
+const lst=s=>s?s.split(/\n|;/).map(x=>x.replace(/^[\s*\-\d.]+/,"").trim()).filter(x=>x.length>2).slice(0,5):[];
+function sect(t,k,next){const m=new RegExp(k+":\\s*([\\s\\S]*?)(?="+next+"|$)","i").exec(t);return m?m[1]:""}
 const code0=t=>t.replace(/```lua|```/gi,"").trim();
+const avg=a=>a.length?(a.reduce((n,x)=>n+x.s,0)/a.length).toFixed(1):"-";
 function pg(id,el){document.querySelectorAll(".page").forEach(p=>p.classList.remove("on"));document.querySelectorAll(".nt").forEach(t=>t.classList.remove("on"));$("p-"+id).classList.add("on");el.classList.add("on");$("aside").style.display=id==="studio"?"":"none"}
 
-// ---------- game state ----------
-function mk(idea){return{id:Date.now()+Math.random(),idea,prompt:idea,name:idea.slice(0,18),plan:"",design:"",files:{},parser:null,fixed:{},scores:[],v:{},st:{},bot:{},open:{},out:{},tab:"pipe",stopped:false,running:false,err:"",up:null,shipped:false}}
+function mk(theme){return{id:Date.now()+Math.random(),theme,name:theme.slice(0,18),tab:"pipe",open:{},stopped:false,running:false,err:"",...blank()}}
+function blank(){return{ideas:[],sel:-1,ask:null,final:"",changes:[],plan:"",design:"",svg:"",files:{},parser:null,fixed:{},scores:[],prev:null,v:{},st:{},bot:{},out:{},up:null,shipped:false}}
 const setS=(g,id,v)=>{g.st[id]=v;render()};
 const bs=(g,s,n,v)=>{g.bot[s+":"+n]=v;render()};
 function fan(g,sid,fn){return Promise.all(S(sid).bots.map(async(b,i)=>{bs(g,sid,b[0],"work");try{const r=await fn(b,i);bs(g,sid,b[0],"done");return r}catch(e){bs(g,sid,b[0],"err");throw e}}))}
-function go(){const i=$("gp").value.trim();if(!i)return;const g=mk(i);GAMES.push(g);CUR=g;run(g)}
+function fail(g,e){if(e.message!=="Stopped"){g.err=e.message;const r=Object.keys(g.st).find(k=>g.st[k]==="run");if(r)g.st[r]="err"}}
 function sel(id){CUR=GAMES.find(g=>g.id==id);render()}
 function tg(id){const g=CUR,st=g.st[id]||"idle";g.open[id]=!(g.open[id]!==undefined?g.open[id]:(st==="run"||st==="wait"));render()}
 function jump(id){CUR.tab="pipe";CUR.open[id]=true;render();setTimeout(()=>{const e=$("s-"+id);e&&e.scrollIntoView({behavior:"smooth",block:"start"})},50)}
-async function run(g){g.running=true;g.err="";g.stopped=false;g.st={};g.bot={};g.out={};g.v={};g.files={};g.scores=[];g.parser=null;g.fixed={};g.up=null;g.shipped=false;render();
- try{await s1(g);await s2(g);await s3(g);await s4(g);await s5(g)}catch(e){if(e.message!=="Stopped")g.err=e.message;const r=Object.keys(g.st).find(k=>g.st[k]==="run");if(r)g.st[r]="err"}
- g.running=false;render()}
-function redo(){const g=CUR,f=prompt("What should change?");if(f)g.prompt=g.idea+". Also: "+f;run(g)}
+async function go(){const t=$("gp").value.trim();if(!t)return;const g=mk(t);GAMES.push(g);CUR=g;g.running=true;render();try{await s1(g)}catch(e){fail(g,e)}g.running=false;render()}
+async function pick(i){const g=CUR;if(g.running)return;Object.assign(g,blank(),{ideas:g.ideas,sel:i});g.st.idea="done";g.stopped=false;g.err="";g.running=true;g.open.ask=g.open.better=true;render();
+ try{await sAsk(g);await sBetter(g);await s2(g);await s3(g);await s4(g);await s5(g)}catch(e){fail(g,e)}g.running=false;render()}
 
-async function s1(g){setS(g,"idea","run");
- const R=["core gameplay mechanics and player controls","map layout, biomes and visual theme","NPC AI behavior and difficulty scaling","scoring, power-ups and win conditions","game loop: lobby, match, results flow"];
- const res=await fan(g,"idea",(b,i)=>ai(`You are ${b[0]}, a Roblox designer expert in ${R[i]}. Max 3 sentences, Lua-specific.`,`Game: "${g.prompt}". Design the ${R[i]}.`,260,g));
- const t=await ai("You are Lead Ideator. Merge the 5 inputs into a short Roblox game design doc with sections OVERVIEW, MECHANICS, MAP, AI, SCORING, LOOP. Then end with exactly:\nVERDICT\nGOOD: item; item\nRISKS: item; item\nRECOMMEND: APPROVE or FIX",`Game: "${g.prompt}"\n\n`+res.map((x,i)=>`[${S("idea").bots[i][0]}] ${x.trim()}`).join("\n\n"),900,g);
- g.plan=t.split(/\bVERDICT\b/i)[0].trim();g.v.idea=parseV(t);
- g.out.idea=res.map((x,i)=>`${S("idea").bots[i][0]}: ${x.trim()}`).join("\n\n")+"\n\n--- GAME PLAN ---\n"+g.plan;setS(g,"idea","done")}
+async function s1(g){setS(g,"idea","run");const A=["fast action and skill","puzzle and strategy","co-op teamwork","progression and collecting","party and competitive rounds"];
+ const res=await fan(g,"idea",(b,i)=>ai("You are a Roblox game ideator. Write ONE game idea in simple language, about 50 words. Reply exactly:\nTITLE: 3-5 words\nIDEA: the idea",`Theme: "${g.theme}". Angle: ${A[i]}. Make it different from other angles.`,220,g));
+ g.ideas=res.map((t,i)=>({n:S("idea").bots[i][0],title:(/TITLE:\s*(.+)/i.exec(t)||[])[1]||A[i],text:((/IDEA:\s*([\s\S]+)/i.exec(t)||[])[1]||t).trim()}));g.st.idea="wait";g.open.idea=true;render()}
+async function sAsk(g){setS(g,"ask","run");bs(g,"ask","Questioner","work");const it=g.ideas[g.sel];
+ const t=await ai("You are the Questioner. Challenge this Roblox game idea like a skeptical player and developer. Reply exactly:\nPROS: item; item; item\nCONS: item; item; item\nQUESTIONS: item; item","Idea: "+it.title+". "+it.text,350,g);
+ g.ask={pros:lst(sect(t,"PROS","CONS")),cons:lst(sect(t,"CONS","QUESTIONS")),qs:lst(sect(t,"QUESTIONS","$^"))};bs(g,"ask","Questioner","done");setS(g,"ask","done")}
+async function sBetter(g){setS(g,"better","run");bs(g,"better","Betterment","work");const it=g.ideas[g.sel];
+ const t=await ai("You are the Betterment bot. Think from the PLAYER's point of view: what would confuse, bore or frustrate them? Improve the idea by answering the cons and questions. Reply exactly:\nTITLE: name\nIMPROVED IDEA: max 120 words, simple language\nCHANGES: change; change; change",`Idea: ${it.title}. ${it.text}\nCons: ${g.ask.cons.join("; ")}\nQuestions: ${g.ask.qs.join("; ")}`,500,g);
+ const fin=sect(t,"IMPROVED IDEA","CHANGES").trim()||it.text;g.final=fin;g.changes=lst(sect(t,"CHANGES","$^"));g.plan=(sect(t,"TITLE","IMPROVED").trim()||it.title)+": "+fin;
+ g.out.better=g.plan;bs(g,"better","Betterment","done");setS(g,"better","done")}
 
+function cleanSvg(t){let m=/<svg[\s\S]*<\/svg>/i.exec(t);if(!m)return"";let s=m[0].replace(/<script[\s\S]*?<\/script>/gi,"").replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi,"").replace(/\son\w+\s*=\s*("[^"]*"|'[^']*')/gi,"").replace(/(href|xlink:href)\s*=\s*("[^"]*"|'[^']*')/gi,"");if(!/xmlns=/.test(s))s=s.replace("<svg",'<svg xmlns="http://www.w3.org/2000/svg"');return s}
 async function s2(g){setS(g,"design","run");
- const T=["Explorer folder structure: all folders, Models, Parts with exact names","Map Parts: Name, Size, Position, BrickColor, Material, Anchored","Player setup: WalkSpeed, MaxHealth, Teams, tools","ScreenGui: each element with Name, Class, Position, Size, Text (health, score, timer)","Lighting: TimeOfDay, Ambient, Brightness, fog"];
- const res=await fan(g,"design",(b,i)=>ai(`You are ${b[0]}, a Roblox Studio designer. Give concrete values: exact names, sizes, positions.`,`Plan:\n${g.plan.slice(0,900)}\nTask: ${T[i]}`,380,g));
- g.design=res.map((x,i)=>`== ${S("design").bots[i][0]} ==\n${x.trim()}`).join("\n\n");g.out.design=g.design;
- const v=await ai("You review a Roblox Studio build sheet. Reply ONLY in this format:\nGOOD: item; item\nRISKS: item; item\nRECOMMEND: APPROVE or FIX","Plan:\n"+g.plan.slice(0,500)+"\n\nBuild sheet:\n"+g.design.slice(0,1500),200,g);g.v.design=parseV(v);setS(g,"design","done")}
+ const T=["Explorer folders and map Parts: exact Names, Sizes, Positions, Materials","Player setup: WalkSpeed, MaxHealth, rules, win/lose, weapon or tool","ScreenGui elements (health, score, timer) with Position, Size, Text, plus Lighting values"];
+ const res=await fan(g,"design",(b,i)=>i<3?ai(`You are ${b[0]}, a Roblox Studio designer. Give concrete values and exact names.`,`Game: ${g.plan.slice(0,900)}\nTask: ${T[i]}`,380,g):ai("Draw a top-down bird's-eye 2D layout of this Roblox game arena as ONE SVG with viewBox 0 0 400 300. Flat colors, simple shapes and text labels only (rect, circle, polygon, text). Label spawn points, hazards, goals and zones. No scripts, no images. Output ONLY the <svg> element.","Game: "+g.plan.slice(0,700),1200,g));
+ g.design=res.slice(0,3).map((x,k)=>`== ${S("design").bots[k][0]} ==\n${x.trim()}`).join("\n\n");g.out.design=g.design;g.svg=cleanSvg(res[3]);setS(g,"design","done")}
 
 async function s3(g){setS(g,"code","run");
- const F=[["ServerScriptService/GameManager","Game loop, rounds, match timer, scoring, RemoteEvents, win/lose."],["ServerScriptService/NPCController","Enemy spawning, PathfindingService chasing, Idle/Chase/Attack states, damage, respawn."],["StarterPlayerScripts/PlayerController","LocalScript: movement, weapon input, effects, RemoteEvent listeners."],["StarterGui/GameGui","LocalScript: health bar, score, match timer, messages via RemoteEvents."],["ServerScriptService/MapBuilder","Build the arena Parts at runtime."]];
- await fan(g,"code",async(b,i)=>{const f=F[i];const c=await ai(`Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue, use task.wait/task.spawn, game:GetService(). Location: ${f[0]}. Output ONLY Lua code, no markdown.`,`Plan:\n${g.plan.slice(0,500)}\nDesign:\n${g.design.slice(0,400)}\nFile: ${f[0]}\nJob: ${f[1]}`,1200,g);g.files[f[0]]=code0(c)});
+ const F=[["ServerScriptService/GameManager","Game loop, rounds, match timer, scoring, RemoteEvents, win/lose."],["ServerScriptService/NPCController","Enemy or hazard spawning and behaviour, damage, respawn."],["StarterPlayerScripts/PlayerController","LocalScript: movement, weapon or tool input, effects, RemoteEvent listeners."],["StarterGui/GameGui","LocalScript: health bar, score, match timer, messages via RemoteEvents."],["ServerScriptService/MapBuilder","Build the arena Parts at runtime."]];
+ await fan(g,"code",async(b,i)=>{const f=F[i];const c=await ai(`Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue, use task.wait/task.spawn, game:GetService(). Location: ${f[0]}. Output ONLY Lua code, no markdown.`,`Game:\n${g.plan.slice(0,600)}\nDesign:\n${g.design.slice(0,450)}\nFile: ${f[0]}\nJob: ${f[1]}`,1200,g);g.files[f[0]]=code0(c)});
  g.out.code=Object.entries(g.files).map(([p,c])=>`${p.split("/").join(" → ")}  (${kind(p)}, ${c.split("\n").length} lines)`).join("\n");setS(g,"code","done")}
 
 async function checkFiles(g){const list=()=>Object.entries(g.files).map(([n,s])=>({name:n,source:s}));
  let res=await validate(list());if(!res){g.parser=null;return}
  const bad=res.filter(r=>!r.syntaxOk);
- if(bad.length){await Promise.all(bad.map(async b=>{try{const f=await ai("Expert Roblox Lua scripter. Fix the syntax error. Plain Lua only. Output ONLY the full corrected Lua code.",`Parser error: ${b.error}\n\nCode:\n${g.files[b.name]}`,1200,g);g.files[b.name]=code0(f);g.fixed[b.name]=true}catch(e){}}));res=(await validate(list()))||res}
+ if(bad.length){await Promise.all(bad.map(async b=>{try{const f=await ai("Expert Roblox Lua scripter. Fix the syntax error. Plain Lua only. Output ONLY the full corrected Lua code.",`Parser error: ${b.error}\n\nCode:\n${g.files[b.name]}`,1500,g);g.files[b.name]=code0(f);g.fixed[b.name]=true}catch(e){}}));res=(await validate(list()))||res}
  g.parser={};res.forEach(r=>g.parser[r.name]=r)}
 const anatomy=g=>PARTS.map(p=>({n:p[0],hint:p[2],f:Object.entries(g.files).filter(([k,c])=>p[1].test(c)||p[1].test(k)).map(([k])=>k.split("/").pop())}));
-
 async function s4(g){setS(g,"review","run");const bots=S("review").bots;bots.forEach(b=>g.bot["review:"+b[0]]="work");render();
  await checkFiles(g);
  const all=Object.entries(g.files).map(([p,c])=>`-- ${p}\n${c}`).join("\n---\n").slice(0,3500);
- const P=["SyntaxBot: list Lua syntax errors, undefined variables and bad API calls in the code below, with file and fix. If none, say none.","PlacementBot: check server vs client placement. Server scripts must not touch LocalPlayer or UI; LocalScripts cannot use server-only APIs. List problems.","LogicBot: check gameplay logic: does the loop work, win/lose trigger, enemy chase? List gaps."];
+ const P=["SyntaxBot: list Lua syntax errors, undefined variables and bad API calls, with file and fix. If none, say none.","PlacementBot: check server vs client placement. Server scripts must not touch LocalPlayer or UI; LocalScripts cannot use server-only APIs. List problems.","LogicBot: check gameplay logic: does the loop work, win/lose trigger, enemy behaviour? List gaps."];
  const R=await Promise.all(P.map(async(p,i)=>{const r=await ai(p+" Judge only the excerpt given.","Code excerpt:\n"+all,360,g);bs(g,"review",bots[i][0],"done");return r.trim()}));
  const pr=g.parser?Object.values(g.parser).map(r=>`${r.syntaxOk?"OK  ":"FAIL"} ${r.name}${g.fixed[r.name]?" (auto-fixed once)":""}${r.syntaxOk?"":" - "+r.error}${r.warnings&&r.warnings.length?"\n     warn: "+r.warnings.join("; "):""}`).join("\n"):"Parser check unavailable (could not reach /api/validate-lua).";
  g.out.review="PARSER\n"+pr+"\n\nSyntaxBot:\n"+R[0]+"\n\nPlacementBot:\n"+R[1]+"\n\nLogicBot:\n"+R[2];
- const bad=g.parser?Object.values(g.parser).filter(r=>!r.syntaxOk).length:0,warn=g.parser?Object.values(g.parser).reduce((n,r)=>n+(r.warnings?r.warnings.length:0),0):0,miss=anatomy(g).filter(a=>!a.f.length).map(a=>a.n);
- g.v.review={good:g.parser?[`${Object.keys(g.files).length-bad} of ${Object.keys(g.files).length} scripts parse`,Object.keys(g.fixed).length?"auto-fixed "+Object.keys(g.fixed).length+" file(s)":"no syntax errors found"]:["parser offline: bots only"],risks:[bad?bad+" file(s) still fail to parse":"",warn?warn+" Roblox API warning(s)":"",!g.parser?"syntax not machine-checked":""].filter(Boolean),rec:bad||!g.parser?"FIX":"APPROVE"};
- g.v.code={good:[Object.keys(g.files).length+" scripts with locations and script types"],risks:miss.length?["Missing parts: "+miss.join(", ")+" (use the Helper)"]:["All 8 core parts detected (by keyword scan)"],rec:miss.length>2?"FIX":"APPROVE"};
- setS(g,"review","done")}
+ const n=Object.keys(g.files).length,bad=g.parser?Object.values(g.parser).filter(r=>!r.syntaxOk).length:0,warn=g.parser?Object.values(g.parser).reduce((a,r)=>a+(r.warnings?r.warnings.length:0),0):0,miss=anatomy(g).filter(a=>!a.f.length).map(a=>a.n);
+ g.v.review={good:g.parser?[`${n-bad} of ${n} scripts parse`,Object.keys(g.fixed).length?"auto-fixed "+Object.keys(g.fixed).length+" file(s)":"no syntax errors found"]:["parser offline: bots only"],risks:[bad?bad+" file(s) still fail to parse":"",warn?warn+" Roblox API warning(s)":"",!g.parser?"syntax not machine-checked":""].filter(Boolean),rec:bad||!g.parser?"FIX":"APPROVE"};
+ g.v.code={good:[n+" scripts with locations and script types"],risks:miss.length?["Missing parts: "+miss.join(", ")+" (use the Helper)"]:["All 8 core parts detected (keyword scan)"],rec:miss.length>2?"FIX":"APPROVE"};setS(g,"review","done")}
 
 async function s5(g){setS(g,"wiz","run");g.bot["wiz:Wizard"]="work";render();
  const ex=Object.entries(g.files).map(([p,c])=>`FILE ${p} (${kind(p)})\n${c.slice(0,450)}`).join("\n\n");
- const t=await ai("You are the Wizard. In plain language for a beginner, explain what each file does, where it goes in Studio and what to watch for. Use ONLY the code excerpts given and never say you have not seen the code. End with: RECOMMENDATION: APPROVE or NEEDS CHANGES.",`Game: "${g.idea}"\n\n${ex}\n\nReview notes:\n${g.out.review.slice(0,600)}`,700,g);
+ const t=await ai("You are the Wizard. In plain language for a beginner, explain what each file does, where it goes in Studio and what to watch for. Use ONLY the code excerpts given. End with: RECOMMENDATION: APPROVE or NEEDS CHANGES.",`Game: ${g.plan.slice(0,400)}\n\n${ex}\n\nReview notes:\n${g.out.review.slice(0,600)}`,700,g);
  g.out.wiz=t.trim();g.bot["wiz:Wizard"]="done";setS(g,"wiz","wait")}
-function wizBox(g){return `<div class="lbl">Verdict checklist from earlier steps</div><ul class="chk">${["idea","design","code","review"].map(i=>g.v[i]?`<li><b class="${g.v[i].rec}">${g.v[i].rec}</b> ${S(i).t}: ${esc((g.v[i].risks[0]||g.v[i].good[0]||""))}</li>`:"").join("")}</ul><div class="act"><button class="btn gr" onclick="approve()">Approve, run testers</button><button class="btn rd" onclick="redo()">Request changes</button></div>`}
-async function approve(){const g=CUR;g.st.wiz="done";g.open.test=true;g.running=true;render();
- try{await s6(g)}catch(e){if(e.message!=="Stopped"){g.err=e.message;g.st.test="err"}}g.running=false;render()}
+async function approve(){const g=CUR;g.st.wiz="done";g.open.test=true;g.running=true;g.err="";render();try{await s6(g)}catch(e){fail(g,e)}g.running=false;render()}
 async function s6(g){setS(g,"test","run");
  const F=["fun factor and engagement","bugs and edge cases","game balance and scoring","performance with 12+ players","UX and GUI clarity"];
  const sample=Object.entries(g.files).map(([p,c])=>`--${p}\n${c.slice(0,500)}`).join("\n---\n");
- const res=await fan(g,"test",(b,i)=>ai(`You are ${b[0]}, a Roblox tester for ${F[i]}. The code is shown as excerpts, so judge only what you can see and do not penalise the excerpting. FIRST LINE must be "Score: X/10". Then 2 sentences of specific feedback and one suggestion.`,`Game: "${g.idea}"\nPlan:\n${g.plan.slice(0,300)}\nCode:\n${sample.slice(0,2200)}`,230,g));
- g.scores=res.map((t,i)=>{const m=t.match(/Score:\s*(\d+)/i);return{n:S("test").bots[i][0],s:m?+m[1]:7,fb:t.replace(/Score:\s*\d+\/10\s*/i,"").trim()}});
- const avg=g.scores.reduce((a,x)=>a+x.s,0)/g.scores.length,lo=g.scores.slice().sort((a,b)=>a.s-b.s)[0],hi=g.scores.slice().sort((a,b)=>b.s-a.s)[0];
- g.v.test={good:[`average score ${avg.toFixed(1)}/10`,`${hi.n}: ${hi.fb.split(/(?<=[.!?])\s/)[0]}`],risks:[`${lo.n} (${lo.s}/10): ${lo.fb.split(/(?<=[.!?])\s/)[0]}`],rec:avg>=7&&lo.s>=4?"APPROVE":"FIX"};
+ const res=await fan(g,"test",(b,i)=>ai(`You are ${b[0]}, a Roblox tester for ${F[i]}. The code is shown as excerpts, so judge only what you can see. FIRST LINE must be "Score: X/10". Then 2 sentences of specific feedback and one concrete issue to fix.`,`Game: ${g.plan.slice(0,300)}\nCode:\n${sample.slice(0,2200)}`,230,g));
+ g.scores=res.map((t,i)=>{const m=t.match(/Score:\s*(\d+)/i);return{n:S("test").bots[i][0],s:m?Math.min(10,+m[1]):7,fb:t.replace(/Score:\s*\d+\/10\s*/i,"").trim()}});
+ const lo=g.scores.slice().sort((a,b)=>a.s-b.s)[0],hi=g.scores.slice().sort((a,b)=>b.s-a.s)[0];
+ g.v.test={good:[`average score ${avg(g.scores)}/10`,`${hi.n}: ${hi.fb.split(/(?<=[.!?])\s/)[0]}`],risks:[`${lo.n} (${lo.s}/10): ${lo.fb.split(/(?<=[.!?])\s/)[0]}`],rec:+avg(g.scores)>=7&&lo.s>=4?"APPROVE":"FIX"};
  g.st.test="wait";g.st.ship="wait";render()}
+
+async function fixRound(){const g=CUR;g.prev=g.scores.map(x=>({...x}));g.stopped=false;g.running=true;g.err="";g.open.fix=true;g.st.fix="run";g.st.test="done";g.bot["fix:Wizard"]="work";render();
+ try{const w=await ai("You are the Wizard. Delegate the fixes to the Coders. Pick at most 3 files. One line per file, exactly: FILE: <path from the list> | FIX: <what to change>","Files: "+Object.keys(g.files).join(", ")+"\nTester issues:\n"+g.scores.map(x=>`${x.n} (${x.s}/10): ${x.fb}`).join("\n"),350,g);
+  const jobs=w.split("\n").map(l=>/FILE:\s*([^|]+)\|\s*FIX:\s*(.+)/i.exec(l)).filter(Boolean).map(m=>[m[1].replace(/[`*]/g,"").replace(/\.lua$/i,"").trim(),m[2].trim()]).filter(j=>g.files[j[0]]).slice(0,3);
+  if(!jobs.length)throw new Error("The Wizard named no valid file to fix. Click Fix issues again.");
+  g.out.fix="Wizard delegated:\n"+jobs.map(j=>j[0].split("/").join(" → ")+"\n   fix: "+j[1]).join("\n");g.bot["fix:Wizard"]="done";g.bot["fix:Coders"]="work";render();
+  await Promise.all(jobs.map(async j=>{const c=await ai("Expert Roblox Lua scripter. Apply ONLY the requested fix to this script and keep everything else identical. Plain Lua only. Output ONLY the full corrected code.",`Fix: ${j[1]}\n\nScript ${j[0]}:\n${g.files[j[0]].slice(0,7000)}`,1800,g);g.files[j[0]]=code0(c)}));
+  g.bot["fix:Coders"]="done";g.bot["fix:Testers"]="work";await checkFiles(g);await s6(g);g.bot["fix:Testers"]="done";g.st.fix="done"}
+ catch(e){fail(g,e)}g.running=false;render()}
 function ship(){const g=CUR;g.stopped=true;g.shipped=true;g.st.test="done";g.st.ship="done";g.tab="files";render()}
 async function pro(){const g=CUR;g.bot["ship:ProBot"]="work";render();
- try{const t=await ai("You are ProBot. Suggest 6 concrete add-ons that would make this Roblox game better (power-ups, progression, juice, monetisation-safe features, polish). One per line, format: TITLE | impact (High/Med/Low) | effort (Easy/Med/Hard) | one sentence.",`Game: ${g.idea}\nPlan:\n${g.plan.slice(0,700)}\nFiles: ${Object.keys(g.files).join(", ")}`,500);
+ try{const t=await ai("You are ProBot. Suggest 6 concrete add-ons that would make this Roblox game better. One per line, format: TITLE | impact (High/Med/Low) | effort (Easy/Med/Hard) | one sentence.",`Game: ${g.plan.slice(0,700)}\nFiles: ${Object.keys(g.files).join(", ")}`,500);
   g.up=t.split("\n").filter(l=>l.split("|").length>=4).slice(0,6).map(l=>l.split("|").map(x=>x.replace(/^[\s\d.*-]+/,"").trim()));g.bot["ship:ProBot"]="done"}catch(e){g.err=e.message;g.bot["ship:ProBot"]="err"}render()}
-const shipBox=g=>(g.shipped?`<div class="vd APPROVE"><div class="h">Shipped. All bots stopped. Copy the scripts from the Files tab.</div></div>`:"")+`<div class="act"><button class="btn ol sm" onclick="pro()">${g.up?"Re-run":"Run"} ProBot</button></div>`+(g.up?`<div class="up">${g.up.map(u=>`<div><b>${esc(u[0])}</b>${esc(u[1])} impact · ${esc(u[2])} effort<br>${esc(u[3])}</div>`).join("")}</div>`:"");
 
-// ---------- helper bot ----------
-async function helper(text){text=(text||"").trim();const g=CUR;if(!g||!text){HP.msg="Generate a game first, then describe the missing file.";return render()}
+async function helper(text){text=(text||"").trim();const g=CUR;if(!g||!g.plan||!text){HP.msg="Finish choosing an idea first, then describe the missing file.";return render()}
  HP.st.forEach(s=>s[1]="idle");HP.msg="";render();$("hb").disabled=true;const step=(i,v)=>{HP.st[i][1]=v;render()};
- const ctx=`Game: ${g.idea}\nExisting files: ${Object.keys(g.files).join(", ")}\nPlan:\n${g.plan.slice(0,500)}`;
+ const ctx=`Game: ${g.plan.slice(0,500)}\nExisting files: ${Object.keys(g.files).join(", ")}`;
  try{step(0,"run");const w=await ai("You are the Wizard. Decide the single file to add. Reply exactly:\nPATH: ServiceName/FileName\nPURPOSE: one sentence",ctx+"\nRequest: "+text,150);
   const path=((/PATH:\s*([^\n]+)/i.exec(w)||[])[1]||"ServerScriptService/NewScript").replace(/\.lua$/i,"").replace(/[`*]/g,"").trim();step(0,"done");
-  step(1,"run");const d=await ai("You are the Designer. List the objects, RemoteEvents, services and exact names this script needs. Concrete and short.",ctx+"\nFile: "+path+"\n"+w,300);step(1,"done");
-  step(2,"run");let c=code0(await ai(`Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue, use task.wait, game:GetService(). Location: ${path}. Output ONLY Lua code.`,ctx+"\n"+w+"\nDesign:\n"+d,1200));step(2,"done");
-  step(3,"run");const r=await validate([{name:path,source:c}]);if(r&&r[0]&&!r[0].syntaxOk){c=code0(await ai("Fix the syntax error. Plain Lua only. Output ONLY the corrected Lua code.","Error: "+r[0].error+"\n\n"+c,1200));g.fixed[path]=true}step(3,"done");
+  step(1,"run");const d=await ai("You are the Designer. List the objects, RemoteEvents, services and exact names this script needs. Short.",ctx+"\nFile: "+path+"\n"+w,300);step(1,"done");
+  step(2,"run");let c=code0(await ai(`Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue. Location: ${path}. Output ONLY Lua code.`,ctx+"\n"+w+"\nDesign:\n"+d,1200));step(2,"done");
+  step(3,"run");const r=await validate([{name:path,source:c}]);if(r&&r[0]&&!r[0].syntaxOk){c=code0(await ai("Fix the syntax error. Plain Lua only. Output ONLY the corrected code.","Error: "+r[0].error+"\n\n"+c,1200));g.fixed[path]=true}step(3,"done");
   step(4,"run");const t=await ai("You are a tester. Reply 'Score: X/10' then one sentence.","Code:\n"+c.slice(0,1500));step(4,"done");
   g.files[path]=c;const v=await validate([{name:path,source:c}]);if(v&&v[0]){g.parser=g.parser||{};g.parser[path]=v[0]}
   HP.msg=`Added ${path}. Tester: ${t.trim().slice(0,160)}`;g.tab="files";$("hin").value=""}
  catch(e){const i=HP.st.findIndex(s=>s[1]==="run");if(i>=0)HP.st[i][1]="err";HP.msg=e.message}
  $("hb").disabled=false;render()}
 
-// ---------- render ----------
+const cols=(t,a)=>`<div class="vd APPROVE" style="border-left-color:${t}"><div class="c">${a.map(x=>`<div><h5>${x[0]}</h5><ul>${x[1].map(y=>`<li>${esc(y)}</li>`).join("")||"<li>-</li>"}</ul></div>`).join("")}</div></div>`;
 const vd=v=>`<div class="vd ${v.rec}"><div class="h">Verdict: ${v.rec==="APPROVE"?"APPROVE":"FIX BEFORE APPROVING"}</div><div class="c"><div><h5>What is good</h5><ul>${v.good.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>-</li>"}</ul></div><div><h5>Watch out</h5><ul>${v.risks.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>nothing major</li>"}</ul></div></div></div>`;
-function stg(g,s){const st=g.st[s.id]||"idle",op=g.open[s.id]!==undefined?g.open[s.id]:(st==="run"||st==="wait"),lab={idle:"Waiting",run:"Working",wait:"Needs you",done:"Done",err:"Error"}[st];
+const cmp=g=>`<table class="cmp"><tr><th>Tester</th><th>Before</th><th>After</th><th>Change</th></tr>${g.scores.map((x,i)=>{const p=g.prev[i]?g.prev[i].s:null,d=p==null?0:x.s-p;return `<tr><td>${x.n}</td><td>${p==null?"-":p+"/10"}</td><td>${x.s}/10</td><td class="${d>0?"up":d<0?"dn":""}">${d>0?"+":""}${d}</td></tr>`}).join("")}<tr><td><b>Average</b></td><td>${avg(g.prev)}</td><td>${avg(g.scores)}</td><td></td></tr></table>`;
+function stg(g,s){const st=g.st[s.id]||"idle";if(s.id==="fix"&&!g.st.fix)return"";const op=g.open[s.id]!==undefined?g.open[s.id]:(st==="run"||st==="wait"),lab={idle:"Waiting",run:"Working",wait:"Needs you",done:"Done",err:"Error"}[st];
  let b=`<p class="role">${esc(s.role)}</p><div class="bots">${s.bots.map(x=>{const k=g.bot[s.id+":"+x[0]]||"idle";return `<div class="bc ${k}"><i></i><b>${x[0]}</b><span>${esc(x[1])}</span></div>`}).join("")}</div>`;
- if(g.out[s.id])b+=`<div class="lbl">Output</div><pre class="out">${esc(g.out[s.id])}</pre>`;
- if(s.id==="test"&&g.scores.length)b+=`<div class="sc">${g.scores.map(x=>`<div class="sk"><b class="${x.s>=8?"g":x.s>=5?"a":"r"}">${x.s}/10</b><h6>${x.n}</h6>${esc(x.fb)}</div>`).join("")}</div>`;
+ if(s.id==="idea"&&g.ideas.length)b+=`<div class="lbl">${st==="wait"?"Choose one idea":"Ideas"}</div><div class="ideas">${g.ideas.map((x,i)=>`<div class="idc ${g.sel===i?"sel":""}"><b>${esc(x.title)}</b><p>${esc(x.text)}</p><button class="btn sm ${g.sel===i?"gr":""}" ${g.running?"disabled":""} onclick="pick(${i})">${g.sel===i?"Chosen":"Choose this idea"}</button></div>`).join("")}</div>`;
+ if(s.id==="ask"&&g.ask)b+=cols("#d33",[["Pros",g.ask.pros],["Cons",g.ask.cons],["Open questions",g.ask.qs]]);
+ if(s.id==="better"&&g.final)b+=`<div class="lbl">Improved idea</div><pre class="out">${esc(g.plan)}</pre>`+cols("#e6b422",[["What changed",g.changes]]);
+ if(s.id==="design"&&g.svg)b+=`<div class="lbl">Bird's-eye sketch (AI-drawn layout)</div><img class="sketch" alt="Bird's-eye layout" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(g.svg)}">`;
+ if(g.out[s.id]&&s.id!=="better")b+=`<div class="lbl">Output</div><pre class="out">${esc(g.out[s.id])}</pre>`;
+ if(s.id==="test"&&g.scores.length)b+=`<div class="lbl">Ratings and issues</div><div class="sc">${g.scores.map(x=>`<div class="sk"><b class="${x.s>=8?"g":x.s>=5?"a":"r"}">${x.s}/10</b><h6>${x.n}</h6>${esc(x.fb)}</div>`).join("")}</div>`;
+ if(s.id==="fix"&&g.prev&&g.st.fix==="done")b+=`<div class="lbl">Previous rating vs new rating</div>`+cmp(g);
  if(g.v[s.id])b+=vd(g.v[s.id]);
- if(s.id==="wiz"&&st==="wait")b+=wizBox(g);
- if(s.id==="test"&&st==="wait")b+=`<div class="act"><button class="btn gr" onclick="ship()">Ship it (stops all bots)</button><button class="btn rd" onclick="redo()">Needs changes</button></div>`;
- if(s.id==="ship"&&(st==="wait"||st==="done"))b+=shipBox(g);
- return `<div class="stg ${st}" id="s-${s.id}"><div class="sh" onclick="tg('${s.id}')">${px(s.ic,s.col)}<b>${s.t}</b><span class="bd ${st}">${lab}</span><em>${op?"▲":"▼"}</em></div><div class="sb ${op?"o":""}">${b}</div></div>`}
+ if(s.id==="wiz"&&st==="wait")b+=`<div class="act"><button class="btn gr" onclick="approve()">Approve, run testers</button><button class="btn ol" onclick="jump('idea')">Choose a different idea</button></div>`;
+ if(s.id==="test"&&st==="wait")b+=`<div class="act"><button class="btn" onclick="fixRound()" ${g.running?"disabled":""}>Fix issues</button><button class="btn gr" onclick="ship()">Ship it (stops all bots)</button></div>`;
+ if(s.id==="ship"&&(st==="wait"||st==="done"))b+=(g.shipped?`<div class="vd APPROVE"><div class="h">Shipped. Copy the scripts from the Files tab.</div></div>`:"")+`<div class="act"><button class="btn ol sm" onclick="pro()">${g.up?"Re-run":"Run"} ProBot</button></div>`+(g.up?`<div class="upg">${g.up.map(u=>`<div><b>${esc(u[0])}</b>${esc(u[1])} impact · ${esc(u[2])} effort<br>${esc(u[3])}</div>`).join("")}</div>`:"");
+ return `<div class="stg ${st==="err"?"err":""}" id="s-${s.id}"><div class="sh" style="background:${s.bg}" onclick="tg('${s.id}')">${px(s.ic,s.col)}<b>${s.t}</b><span class="bd">${lab}</span><em>${op?"▲":"▼"}</em></div><div class="sb ${op?"o":""}">${b}</div></div>`}
 function view(g){
- const flow=ST.map((s,i)=>`<div class="fs ${g.st[s.id]||""}" onclick="jump('${s.id}')">${px(s.ic,s.col)}${s.t}</div>${i<ST.length-1?'<span class="ar">→</span>':""}`).join("");
+ const flow=ST.filter(s=>s.id!=="fix"||g.st.fix).map((s,i,a)=>`<div class="fs ${g.st[s.id]||""}" style="background:${s.bg}" onclick="jump('${s.id}')">${px(s.ic,s.col)}${s.t}</div>${i<a.length-1?'<span class="ar">→</span>':""}`).join("");
  const n=Object.keys(g.files).length,tabs=[["pipe","Pipeline"],["files","Files ("+n+")"],["anat","Anatomy"]].map(t=>`<div class="st ${g.tab===t[0]?"on":""}" onclick="CUR.tab='${t[0]}';render()">${t[1]}</div>`).join("");
  let body="";
  if(g.tab==="pipe")body=ST.map(s=>stg(g,s)).join("");
  else if(g.tab==="files")body=n?Object.entries(g.files).map(([p,c],i)=>{const r=g.parser&&g.parser[p],badge=r?(r.syntaxOk?(r.warnings&&r.warnings.length?`<span class="chip w">${r.warnings.length} warning(s)</span>`:'<span class="chip ok">parses</span>'):`<span class="chip bad">${esc(r.error)}</span>`):"",fx=g.fixed[p]?'<span class="chip w">auto-fixed</span>':"";
-  return `<div class="file"><div class="crumb">${p.split("/").map(esc).join(' <em>→</em> ')} <em>→</em> <span class="chip">${kind(p)}</span>${badge}${fx}</div><pre class="code">${esc(c)}</pre><div class="row" style="margin-top:6px"><button class="btn ol sm" onclick="cp(${i})">Copy</button></div></div>`}).join("")+`<div class="row"><button class="btn ol" onclick="cpAll()">Copy all</button><button class="btn ol" onclick="dl()">Download .txt</button></div><div class="card" style="margin-top:.9rem"><div class="lbl">Put it in Studio</div><div class="mut">Follow each arrow path. ServerScriptService gets a Script. StarterPlayerScripts and StarterGui get a LocalScript (the GUI one goes inside a ScreenGui). Then press Play and watch Output. If something breaks, use the Video Analyzer.</div></div>`:`<div class="mut">No files yet.</div>`;
- else body=n?anatomy(g).map(a=>`<div class="part"><b>${a.n}</b><span>${a.f.length?"in "+a.f.map(esc).join(", "):esc(a.hint)}</span>${a.f.length?'<span class="chip ok" style="flex:0">found</span>':`<button class="btn sm" onclick="helper('${a.hint.replace(/'/g,"")}')">Ask Helper</button>`}</div>`).join("")+`<div class="mut" style="margin-top:6px">Detection is a keyword scan, not a guarantee. It shows what to double-check.</div>`:`<div class="mut">Anatomy appears after the Coders finish.</div>`;
+  return `<div class="file"><div class="crumb">${p.split("/").map(esc).join(' <em>→</em> ')} <em>→</em> <span class="chip">${kind(p)}</span>${badge}${fx}</div><pre class="code">${esc(c)}</pre><div class="row" style="margin-top:6px"><button class="btn ol sm" onclick="cp(${i})">Copy</button></div></div>`}).join("")+`<div class="row"><button class="btn ol" onclick="cpAll()">Copy all</button><button class="btn ol" onclick="dl()">Download .txt</button></div><div class="card" style="margin-top:.9rem"><div class="lbl">Put it in Studio</div><div class="mut">Follow each arrow path. ServerScriptService gets a Script. StarterPlayerScripts and StarterGui get a LocalScript (the GUI one goes inside a ScreenGui). Press Play and watch Output. If something breaks, use the Video Analyzer.</div></div>`:`<div class="mut">No files yet.</div>`;
+ else body=n?anatomy(g).map(a=>`<div class="part"><b>${a.n}</b><span>${a.f.length?"in "+a.f.map(esc).join(", "):esc(a.hint)}</span>${a.f.length?'<span class="chip ok" style="flex:0">found</span>':`<button class="btn sm" onclick="helper('${a.hint.replace(/'/g,"")}')">Ask Helper</button>`}</div>`).join("")+`<div class="mut" style="margin-top:6px">Detection is a keyword scan, not a guarantee.</div>`:`<div class="mut">Anatomy appears after the Coders finish.</div>`;
  return (g.err?`<div class="err">${esc(g.err)}</div>`:"")+`<div class="flow">${flow}</div><div class="stabs">${tabs}</div>`+body}
 function render(){
- $("gtabs").innerHTML=GAMES.map(g=>`<div class="gt ${g===CUR?"on":""}" onclick="sel(${g.id})">${px("code",g===CUR?"#7c6af5":"#6a6a85")}${esc(g.name)}${g.running?" ...":""}</div>`).join("");
- $("gview").innerHTML=CUR?view(CUR):`<div class="mut">Describe a game above to start. Each game gets its own tab.</div>`;
+ $("gtabs").innerHTML=GAMES.map(g=>`<div class="gt ${g===CUR?"on":""}" onclick="sel(${g.id})">${px("idea",g===CUR?"#e6b422":"#6a6a85")}${esc(g.name)}${g.running?" ...":""}</div>`).join("");
+ $("gview").innerHTML=CUR?view(CUR):`<div class="mut">Enter a theme above. Each game gets its own tab.</div>`;
  $("hlog").innerHTML=HP.st.map(s=>`<div class="step ${s[1]}"><i></i>${s[0]}</div>`).join("")+(HP.msg?`<div class="mut" style="margin-top:6px">${esc(HP.msg)}</div>`:"")}
 const txt=g=>Object.entries(g.files).map(([p,c])=>`-- ===== ${p}.lua (${kind(p)}) =====\n${c}`).join("\n\n\n");
 function cp(i){const p=Object.keys(CUR.files)[i];navigator.clipboard.writeText(CUR.files[p])}
 function cpAll(){navigator.clipboard.writeText(txt(CUR))}
 function dl(){const a=document.createElement("a");a.href="data:text/plain;charset=utf-8,"+encodeURIComponent(txt(CUR));a.download=CUR.name.replace(/\W+/g,"_")+".txt";a.click()}
 
-// ---------- video analyzer ----------
 function vid(f){if(!f)return;if(f.size>2e8){alert("Max 200MB");return}$("dt").textContent="Extracting frames...";
  const v=document.createElement("video");v.preload="metadata";v.src=URL.createObjectURL(f);
  v.onloadedmetadata=()=>{const d=v.duration,n=Math.min(8,Math.max(3,Math.floor(d/5))),ts=Array.from({length:n},(_,i)=>d/(n+1)*(i+1));FR=[];$("fstrip").innerHTML="";let k=0;
   ts.forEach((t,i)=>{const c=document.createElement("canvas");c.width=320;c.height=200;const v2=document.createElement("video");v2.src=v.src;v2.currentTime=t;
-   v2.onseeked=()=>{c.getContext("2d").drawImage(v2,0,0,320,200);const u=c.toDataURL("image/jpeg",.72);FR[i]=u.split(",")[1];const im=document.createElement("img");im.src=u;$("fstrip").appendChild(im);
-    if(++k===ts.length){$("dt").textContent=k+" frames ready";$("vbtn").disabled=false}}})}}
+   v2.onseeked=()=>{c.getContext("2d").drawImage(v2,0,0,320,200);const u=c.toDataURL("image/jpeg",.72);FR[i]=u.split(",")[1];const im=document.createElement("img");im.src=u;$("fstrip").appendChild(im);if(++k===ts.length){$("dt").textContent=k+" frames ready";$("vbtn").disabled=false}}})}}
 async function anl(){const o=$("aout"),b=$("vbtn"),e=$("verr");e.style.display="none";b.disabled=true;o.textContent="Analyzing...";
  try{const r=await fetch("/api/analyze-video",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({frames:FR,context:$("vctx").value.trim()})});
   const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(x){throw new Error("Video API not reachable. Check api/analyze-video.js is deployed.")}
   if(!r.ok)throw new Error(d.error||"Analysis failed");LA=d.analysis;o.textContent=LA;$("vmod").textContent=d.model?"("+d.model+")":""}
  catch(x){o.textContent="";e.textContent=x.message;e.style.display="block"}b.disabled=false}
-
-// ---------- boot ----------
 (async()=>{try{const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:"Reply READY",messages:[{role:"user",content:"ping"}],max_tokens:5})});const d=await r.json().catch(()=>null);
  if(!r.ok||!d){$("ail").textContent="AI offline, check keys";$("aid").style.background="var(--rd)"}else $("ail").textContent="AI ready"}catch(e){$("ail").textContent="Cannot reach server";$("aid").style.background="var(--rd)"}})();
 render();
