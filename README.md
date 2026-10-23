@@ -36,3 +36,32 @@ Turn one game idea into a starting set of Roblox Lua scripts, review each file, 
 4. Deploy: import the repo into Vercel and add `OPENROUTER_API_KEY` and `ALLOWED_ORIGINS` under Environment Variables.
 
 ## Project structure
+wizgame/
+├── api/
+│ ├── _lib/
+│ │ ├── security.js # CORS allow-list, rate limiting, method checks
+│ │ └── openrouter.js # model discovery, fallback, cooldowns
+│ ├── chat.js # LLM proxy with fallback, timeouts, logging
+│ ├── health.js # shows which env vars the deployment sees
+│ └── validate-lua.js # Lua syntax check + Roblox API warnings
+├── scripts/benchmark.js # runs test prompts, records parse results
+├── index.html # frontend app
+├── validator-ui.js # validation badges in the UI
+├── env.example
+├── package.json
+└── vercel.json
+
+## How to use
+
+1. Type a game idea and click **Suggest ideas**, then pick one.
+2. Review each generated file at the approval gate.
+3. Check the validation badge on each file.
+4. Copy the scripts into Roblox Studio.
+
+## Roadmap
+
+- Playtest-error diagnosis from screenshots/recordings
+- Luau-aware parsing to remove false syntax errors
+- Exporting a ready-to-import Studio project
+
+> Never commit your `.env` file. Add keys only through Vercel's Environment Variables panel.
