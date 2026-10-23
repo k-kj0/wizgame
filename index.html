@@ -48,22 +48,14 @@ pre.out,pre.code{background:var(--b3);border:1px solid var(--bd);border-radius:9
 .part{display:flex;align-items:center;gap:10px;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;margin-bottom:6px;background:var(--b3)}.part b{min-width:170px}.part span{flex:1;color:var(--t2);font-size:.78rem}
 .upg{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px;margin-top:.7rem}.upg div{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:10px;font-size:.76rem;color:var(--t2)}.upg b{color:var(--tx);display:block}
 aside .card{position:sticky;top:64px}.step{display:flex;gap:8px;align-items:center;font-size:.78rem;color:var(--t3);padding:3px 0}.step.run{color:var(--ac)}.step.done{color:var(--gr)}.step.err{color:var(--rd)}.step i{width:7px;height:7px;border-radius:50%;background:currentColor}
-.dz{border:2px dashed var(--bd2);border-radius:13px;padding:2rem;text-align:center;cursor:pointer;background:var(--b3)}.fstrip{display:flex;gap:5px;overflow-x:auto;margin-top:8px}.fstrip img{width:76px;height:48px;object-fit:cover;border-radius:5px}
-.aout{background:var(--b3);border:1px solid var(--bd);border-radius:10px;padding:14px;white-space:pre-wrap;min-height:160px;max-height:460px;overflow:auto;font-size:.82rem;color:var(--t2)}
 </style></head><body>
-<div class="nav"><div class="logo" id="logo"></div><div class="nt on" onclick="pg('studio',this)">Game Studio</div><div class="nt" onclick="pg('video',this)">Video Analyzer</div><div class="ai"><i id="aid"></i><span id="ail">Checking AI...</span></div></div>
+<div class="nav"><div class="logo" id="logo"></div><div class="nt on" onclick="pg('studio',this)">Game Studio</div><div class="ai"><i id="aid"></i><span id="ail">Checking AI...</span></div></div>
 <div class="wrap"><main>
 <div class="page on" id="p-studio">
  <h1>Game Studio</h1><div class="sub">5 ideas, you pick one. Level Bot, Questioner and Betterment sharpen it. Then it is designed, coded, tested, and improved until it scores 8/10.</div>
  <div class="card"><div class="row"><input id="gp" style="flex:1;min-width:200px" value="dodge cannon game" placeholder="Describe a game theme, e.g. zombie survival, obby, tycoon"><button class="btn" onclick="go()">Suggest ideas</button></div></div>
  <div class="gtabs" id="gtabs"></div><div id="gview"></div>
 </div>
-<div class="page" id="p-video">
- <h1>Video Error Analyzer</h1><div class="sub">Record the Studio error, upload it, get a diagnosis and fix.</div>
- <div class="card"><div class="dz" onclick="$('vf').click()"><div id="dt">Click to upload a video (max 200MB)</div></div><input type="file" id="vf" accept="video/*" style="display:none" onchange="vid(this.files[0])"><div class="fstrip" id="fstrip"></div>
- <textarea id="vctx" style="width:100%;margin-top:8px;min-height:70px" placeholder="What were you building and what went wrong?"></textarea>
- <div class="row" style="margin-top:8px"><button class="btn" id="vbtn" onclick="anl()" disabled>Analyze and fix</button></div><div class="err" id="verr" style="display:none;margin-top:8px"></div></div>
- <div class="card"><div class="lbl">Analysis <span id="vmod"></span></div><div class="aout" id="aout">Upload a recording to begin.</div></div>
 </div></main>
 <aside id="aside"><div class="card"><div class="row" style="align-items:center;margin-bottom:6px" id="hh"></div>
  <div class="mut" style="margin-bottom:8px">Missing a file? The Helper goes Wizard, Designer, Coder, Reviewer, Tester, then adds it to the current game.</div>
@@ -102,7 +94,7 @@ const ST=[
 const S=id=>ST.find(s=>s.id===id);
 const PARTS=[["Game loop and rounds",/PlayerAdded|round|match/i,"Add a GameManager script: rounds, win/lose, scoring"],["Enemy / NPC bots",/Pathfinding|Humanoid|NPC/i,"Add an NPC controller script for the enemies"],["Player controls",/UserInputService|Activated|Tool/i,"Add a player controller: input and weapon"],["Timer",/timer|countdown|time ?left|os\.clock|tick\(/i,"Add a match timer script with a UI update"],["GUI elements",/ScreenGui|TextLabel|Frame/i,"Add a GUI script: health bar, score and timer"],["Map / arena",/Instance\.new\(["']Part|Terrain|Workspace/i,"Add a MapBuilder script that builds the arena"],["Score / leaderboard",/leaderstats|score/i,"Add a leaderboard / score script"],["Remote events",/RemoteEvent|FireClient|FireServer/i,"Add a Remotes setup script in ReplicatedStorage"]];
 const kind=p=>/ModuleScript|Modules/i.test(p)?"ModuleScript":/ServerScriptService|ServerStorage/.test(p)?"Script":"LocalScript";
-let GAMES=[],CUR=null,LA="",FR=[];
+let GAMES=[],CUR=null;
 let HP={st:[["Wizard","idle"],["Designer","idle"],["Coder","idle"],["Reviewer","idle"],["Tester","idle"]],msg:""};
 $("logo").innerHTML=px("wizard","#7c6af5")+"Roblox AI Studio";$("hh").innerHTML=px("help","#4a9eff")+"<b>Helper bot</b>";
 
@@ -284,7 +276,7 @@ function view(g){
  let body="";
  if(g.tab==="pipe")body=ST.map(s=>stg(g,s)).join("");
  else if(g.tab==="files")body=n?Object.entries(g.files).map(([p,c],i)=>{const r=g.parser&&g.parser[p],badge=r?(r.syntaxOk?(r.warnings&&r.warnings.length?`<span class="chip w">${r.warnings.length} warning(s)</span>`:'<span class="chip ok">parses</span>'):`<span class="chip bad">${esc(r.error)}</span>`):"",fx=g.fixed[p]?'<span class="chip w">auto-fixed</span>':"";
-  return `<div class="file"><div class="crumb">${p.split("/").map(esc).join(' <em>→</em> ')} <em>→</em> <span class="chip">${kind(p)}</span>${badge}${fx}</div><pre class="code">${esc(c)}</pre><div class="row" style="margin-top:6px"><button class="btn ol sm" onclick="cp(${i})">Copy</button></div></div>`}).join("")+`<div class="row"><button class="btn ol" onclick="cpAll()">Copy all</button><button class="btn ol" onclick="dl()">Download .txt</button></div><div class="card" style="margin-top:.9rem"><div class="lbl">Put it in Studio</div><div class="mut">Follow each arrow path. ServerScriptService gets a Script. StarterPlayerScripts and StarterGui get a LocalScript (the GUI one goes inside a ScreenGui). Press Play and watch Output. If something breaks, use the Video Analyzer.</div></div>`:`<div class="mut">No files yet.</div>`;
+  return `<div class="file"><div class="crumb">${p.split("/").map(esc).join(' <em>→</em> ')} <em>→</em> <span class="chip">${kind(p)}</span>${badge}${fx}</div><pre class="code">${esc(c)}</pre><div class="row" style="margin-top:6px"><button class="btn ol sm" onclick="cp(${i})">Copy</button></div></div>`}).join("")+`<div class="row"><button class="btn ol" onclick="cpAll()">Copy all</button><button class="btn ol" onclick="dl()">Download .txt</button></div><div class="card" style="margin-top:.9rem"><div class="lbl">Put it in Studio</div><div class="mut">Follow each arrow path. ServerScriptService gets a Script. StarterPlayerScripts and StarterGui get a LocalScript (the GUI one goes inside a ScreenGui). Press Play and watch Output. If something breaks, check the Output window in Studio.</div></div>`:`<div class="mut">No files yet.</div>`;
  else body=n?anatomy(g).map(a=>`<div class="part"><b>${a.n}</b><span>${a.f.length?"in "+a.f.map(esc).join(", "):esc(a.hint)}</span>${a.f.length?'<span class="chip ok" style="flex:0">found</span>':`<button class="btn sm" onclick="helper('${a.hint.replace(/'/g,"")}')">Ask Helper</button>`}</div>`).join("")+`<div class="mut" style="margin-top:6px">Detection is a keyword scan, not a guarantee.</div>`:`<div class="mut">Anatomy appears after the Coders finish.</div>`;
  return (g.err?`<div class="err">${esc(g.err)}</div>`:"")+`<div class="flow">${flow}</div><div class="stabs">${tabs}</div>`+body}
 function render(){
@@ -297,16 +289,6 @@ function cp(i){const p=Object.keys(CUR.files)[i];navigator.clipboard.writeText(C
 function cpAll(){navigator.clipboard.writeText(txt(CUR))}
 function dl(){const a=document.createElement("a");a.href="data:text/plain;charset=utf-8,"+encodeURIComponent(txt(CUR));a.download=CUR.name.replace(/\W+/g,"_")+".txt";a.click()}
 
-function vid(f){if(!f)return;if(f.size>2e8){alert("Max 200MB");return}$("dt").textContent="Extracting frames...";
- const v=document.createElement("video");v.preload="metadata";v.src=URL.createObjectURL(f);
- v.onloadedmetadata=()=>{const d=v.duration,n=Math.min(8,Math.max(3,Math.floor(d/5))),ts=Array.from({length:n},(_,i)=>d/(n+1)*(i+1));FR=[];$("fstrip").innerHTML="";let k=0;
-  ts.forEach((t,i)=>{const c=document.createElement("canvas");c.width=320;c.height=200;const v2=document.createElement("video");v2.src=v.src;v2.currentTime=t;
-   v2.onseeked=()=>{c.getContext("2d").drawImage(v2,0,0,320,200);const u=c.toDataURL("image/jpeg",.72);FR[i]=u.split(",")[1];const im=document.createElement("img");im.src=u;$("fstrip").appendChild(im);if(++k===ts.length){$("dt").textContent=k+" frames ready";$("vbtn").disabled=false}}})}}
-async function anl(){const o=$("aout"),b=$("vbtn"),e=$("verr");e.style.display="none";b.disabled=true;o.textContent="Analyzing...";
- try{const r=await fetch("/api/analyze-video",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({frames:FR,context:$("vctx").value.trim()})});
-  const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(x){throw new Error("Video API not reachable. Check api/analyze-video.js is deployed.")}
-  if(!r.ok)throw new Error(d.error||"Analysis failed");LA=d.analysis;o.textContent=LA;$("vmod").textContent=d.model?"("+d.model+")":""}
- catch(x){o.textContent="";e.textContent=x.message;e.style.display="block"}b.disabled=false}
 (async()=>{try{const r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:"Reply READY",messages:[{role:"user",content:"ping"}],max_tokens:5})});const d=await r.json().catch(()=>null);
  if(!r.ok||!d){$("ail").textContent="AI offline, check keys";$("aid").style.background="var(--rd)"}else $("ail").textContent="AI ready"}catch(e){$("ail").textContent="Cannot reach server";$("aid").style.background="var(--rd)"}})();
 render();
