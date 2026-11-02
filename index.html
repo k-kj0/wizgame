@@ -166,46 +166,60 @@ function startImg(g){g.imgState="load";g.imgSrc="";g.svg="";bs(g,"design","Sketc
  setTimeout(()=>{if(g.imgState==="load"){g.imgState="fail";bs(g,"design","SketchBot","err");drawSvg(g)}},60000)}
 async function s2(g){setS(g,"design","run");
  const T=["Explorer folders and map Parts: exact Names, Sizes, Positions, Materials","Player setup: WalkSpeed, MaxHealth, rules, win/lose, weapon or tool","ScreenGui elements (health, score, timer) with Position, Size, Text, plus Lighting values"];
- const res=await fan(g,"design",(b,i)=>i<3?ai(`You are ${b[0]}, a Roblox Studio designer. Give concrete values and exact names.`,`Game: ${g.plan.slice(0,900)}\nTask: ${T[i]}`,380,g):Promise.resolve(""));
+ const res=await fan(g,"design",(b,i)=>i<3?ai(`You are ${b[0]}, a Roblox Studio designer. Give concrete values and exact names.`,`Game: ${g.plan.slice(0,1500)}\nTask: ${T[i]}`,700,g):Promise.resolve(""));
  g.design=res.slice(0,3).map((x,k)=>`== ${S("design").bots[k][0]} ==\n${x.trim()}`).join("\n\n");g.out.design=g.design;startImg(g);setS(g,"design","done")}
 
 async function s3(g){setS(g,"code","run");
+ // One shared "contract" so every script uses the SAME names for RemoteEvents, folders and Parts. This stops files from disagreeing with each other.
+ g.contract=await ai("You are the lead Roblox architect. Write a short CONTRACT that every script must follow. List: (1) RemoteEvent names, each with direction (server->client or client->server) and arguments; (2) names of Folders and key Parts in Workspace; (3) shared numbers (round length, speeds, max health); (4) which script owns what. Use exact names, one item per line, no code.",`Game:\n${g.plan.slice(0,1500)}\nDesign:\n${g.design.slice(0,2500)}`,700,g);
+ g.out.contract=g.contract;
  const F=[["ServerScriptService/GameManager","Game loop, rounds, match timer, scoring, RemoteEvents, win/lose."],["ServerScriptService/NPCController","Enemy or hazard spawning and behaviour, damage, respawn."],["StarterPlayerScripts/PlayerController","LocalScript: movement, weapon or tool input, effects, RemoteEvent listeners."],["StarterGui/GameGui","LocalScript: health bar, score, match timer, messages via RemoteEvents."],["ServerScriptService/MapBuilder","Build the arena Parts at runtime."]];
- await fan(g,"code",async(b,i)=>{const f=F[i];const c=await ai(`Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue, use task.wait/task.spawn, game:GetService(). Location: ${f[0]}. Output ONLY Lua code, no markdown.`,`Game:\n${g.plan.slice(0,600)}\nDesign:\n${g.design.slice(0,450)}\nFile: ${f[0]}\nJob: ${f[1]}`,1200,g);g.files[f[0]]=code0(c)});
+ await fan(g,"code",async(b,i)=>{const f=F[i];const c=await ai(`Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue, use task.wait/task.spawn, game:GetService(). Every variable must be declared before use and spelled exactly the same everywhere. Never leave a table, function or if-block unfinished: write the file from first line to last line and finish with all 'end's. Keep it compact so it fits. Follow the CONTRACT names exactly. Location: ${f[0]}. Output ONLY Lua code, no markdown.`,`Game:\n${g.plan.slice(0,1500)}\nDesign:\n${g.design.slice(0,2500)}\nCONTRACT (use these exact names):\n${g.contract}\nOther files in this game: ${F.map(x=>x[0]).join(", ")}\nFile: ${f[0]}\nJob: ${f[1]}`,3500,g);g.files[f[0]]=code0(c)});
  g.out.code=Object.entries(g.files).map(([p,c])=>`${p.split("/").join(" → ")}  (${kind(p)}, ${c.split("\n").length} lines)`).join("\n");setS(g,"code","done")}
 
 async function checkFiles(g){const list=()=>Object.entries(g.files).map(([n,s])=>({name:n,source:s}));
  let res=await validate(list());if(!res){g.parser=null;return}
- const bad=res.filter(r=>!r.syntaxOk);
- if(bad.length){await Promise.all(bad.map(async b=>{try{const f=await ai("Expert Roblox Lua scripter. Fix the syntax error. Plain Lua only. Output ONLY the full corrected Lua code.",`Parser error: ${b.error}\n\nCode:\n${g.files[b.name]}`,1500,g);g.files[b.name]=code0(f);g.fixed[b.name]=true}catch(e){}}));res=(await validate(list()))||res}
+ const bad=res.filter(r=>!r.syntaxOk||(r.undefinedGlobals||[]).length);
+ if(bad.length){await Promise.all(bad.map(async b=>{try{
+  const why=b.syntaxOk?`These variables are used but never declared (probably typos): ${b.undefinedGlobals.join(", ")}. Fix the spelling or declare them with local. Roblox globals like workspace and game are fine.`:`Parser error: ${b.error}${b.truncated?" The file was CUT OFF. Rewrite the WHOLE script from the first line, shorter and simpler, and finish every table, function and if-block.":""}`;
+  const f=await ai("Expert Roblox Lua scripter. Fix the problem. Plain Lua only. Output ONLY the complete corrected Lua file from the first line to the last line, never a partial patch.",`${why}\n\nCONTRACT:\n${g.contract||"(none)"}\n\nCode:\n${g.files[b.name]}`,4000,g);
+  g.files[b.name]=code0(f);g.fixed[b.name]=true}catch(e){}}));res=(await validate(list()))||res}
  g.parser={};res.forEach(r=>g.parser[r.name]=r)}
 const anatomy=g=>PARTS.map(p=>({n:p[0],hint:p[2],f:Object.entries(g.files).filter(([k,c])=>p[1].test(c)||p[1].test(k)).map(([k])=>k.split("/").pop())}));
 async function s4(g){setS(g,"review","run");const bots=S("review").bots;bots.forEach(b=>g.bot["review:"+b[0]]="work");render();
  await checkFiles(g);
- const all=Object.entries(g.files).map(([p,c])=>`-- ${p}\n${c}`).join("\n---\n").slice(0,3500);
+ const all=Object.entries(g.files).map(([p,c])=>`-- ${p}\n${c}`).join("\n---\n").slice(0,12000);
  const P=["SyntaxBot: list Lua syntax errors, undefined variables and bad API calls, with file and fix. If none, say none.","PlacementBot: check server vs client placement. Server scripts must not touch LocalPlayer or UI; LocalScripts cannot use server-only APIs. List problems.","LogicBot: check gameplay logic: does the loop work, win/lose trigger, enemy behaviour? List gaps."];
- const R=await Promise.all(P.map(async(p,i)=>{const r=await ai(p+" Judge only the excerpt given.","Code excerpt:\n"+all,360,g);bs(g,"review",bots[i][0],"done");return r.trim()}));
+ const R=await Promise.all(P.map(async(p,i)=>{const r=await ai(p+" Judge only the code given.","Code:\n"+all+"\n\nMachine check results (these are facts):\n"+(critList(g).join("\n")||"no parser problems"),500,g);bs(g,"review",bots[i][0],"done");return r.trim()}));
  const pr=g.parser?Object.values(g.parser).map(r=>`${r.syntaxOk?"OK  ":"FAIL"} ${r.name}${g.fixed[r.name]?" (auto-fixed once)":""}${r.syntaxOk?"":" - "+r.error}${r.warnings&&r.warnings.length?"\n     warn: "+r.warnings.join("; "):""}`).join("\n"):"Parser check unavailable (could not reach /api/validate-lua).";
  g.out.review="PARSER\n"+pr+"\n\nSyntaxBot:\n"+R[0]+"\n\nPlacementBot:\n"+R[1]+"\n\nLogicBot:\n"+R[2];
  const n=Object.keys(g.files).length,bad=g.parser?Object.values(g.parser).filter(r=>!r.syntaxOk).length:0,warn=g.parser?Object.values(g.parser).reduce((a,r)=>a+(r.warnings?r.warnings.length:0),0):0,miss=anatomy(g).filter(a=>!a.f.length).map(a=>a.n);
- g.v.review={good:g.parser?[`${n-bad} of ${n} scripts parse`,Object.keys(g.fixed).length?"auto-fixed "+Object.keys(g.fixed).length+" file(s)":"no syntax errors found"]:["parser offline: bots only"],risks:[bad?bad+" file(s) still fail to parse":"",warn?warn+" Roblox API warning(s)":"",!g.parser?"syntax not machine-checked":""].filter(Boolean),rec:bad||!g.parser?"FIX":"APPROVE"};
+ g.v.review={good:g.parser?[`${n-bad} of ${n} scripts parse`,Object.keys(g.fixed).length?"auto-fixed "+Object.keys(g.fixed).length+" file(s)":"no syntax errors found"]:["parser offline: bots only"],risks:[bad?bad+" file(s) still fail to parse":"",crit(g)-bad>0?(crit(g)-bad)+" undefined variable(s): "+critList(g).filter(x=>/undefined/.test(x)).join(" | "):"",warn?warn+" Roblox API warning(s)":"",!g.parser?"syntax not machine-checked":""].filter(Boolean),rec:bad||crit(g)||!g.parser?"FIX":"APPROVE"};
  g.v.code={good:[n+" scripts with locations and script types"],risks:miss.length?["Missing parts: "+miss.join(", ")+" (use the Helper)"]:["All 8 core parts detected (keyword scan)"],rec:miss.length>2?"FIX":"APPROVE"};setS(g,"review","done")}
 
 async function s5(g){setS(g,"wiz","run");g.bot["wiz:Wizard"]="work";render();
- const ex=Object.entries(g.files).map(([p,c])=>`FILE ${p} (${kind(p)})\n${c.slice(0,450)}`).join("\n\n");
- const t=await ai("You are the Wizard. In plain language for a beginner, explain what each file does, where it goes in Studio and what to watch for. Use ONLY the code excerpts given. End with: RECOMMENDATION: APPROVE or NEEDS CHANGES.",`Game: ${g.plan.slice(0,400)}\n\n${ex}\n\nReview notes:\n${g.out.review.slice(0,600)}`,700,g);
+ const ex=Object.entries(g.files).map(([p,c])=>`FILE ${p} (${kind(p)})\n${c.slice(0,1200)}`).join("\n\n");
+ const t=await ai("You are the Wizard. In plain language for a beginner, explain what each file does, where it goes in Studio and what to watch for. Use ONLY the code excerpts given. End with: RECOMMENDATION: APPROVE or NEEDS CHANGES.",`Game: ${g.plan.slice(0,400)}\n\n${ex}\n\nReview notes:\n${g.out.review.slice(0,1500)}`,900,g);
  g.out.wiz=t.trim();g.bot["wiz:Wizard"]="done";setS(g,"wiz","wait")}
 async function approve(){const g=CUR;g.st.wiz="done";g.open.test=true;g.running=true;g.err="";render();try{await s6(g)}catch(e){fail(g,e)}g.running=false;render();if(!g.err&&g.scores.length)await improve(g)}
 
-const snap=g=>({files:clone(g.files),scores:clone(g.scores),avg:+avg(g.scores),parser:g.parser?clone(g.parser):null,fixed:{...g.fixed}});
+// "Critical" = a file that does not parse, or uses a variable that does not exist. These block approval no matter what the average score is.
+const crit=g=>g.parser?Object.values(g.parser).reduce((n,r)=>n+(r.syntaxOk?0:1)+((r.undefinedGlobals||[]).length),0):0;
+const critList=g=>g.parser?Object.values(g.parser).filter(r=>!r.syntaxOk||(r.undefinedGlobals||[]).length).map(r=>`${r.name}: ${r.syntaxOk?"undefined variable(s) "+r.undefinedGlobals.join(", "):r.error}`):[];
+// The Wizard may write a path slightly differently (".lua", arrows, other case, only the file name). Match it to a real file.
+function resolvePath(g,raw){const clean=String(raw||"").replace(/[`*]/g,"").replace(/\s*(→|->|>)\s*/g,"/").replace(/\.lua$/i,"").trim();if(!clean)return null;
+ if(g.files[clean])return clean;const keys=Object.keys(g.files),low=clean.toLowerCase();
+ let k=keys.find(x=>x.toLowerCase()===low);if(k)return k;
+ const base=low.split("/").pop();k=keys.find(x=>x.toLowerCase().split("/").pop()===base);return k||null}
+const snap=g=>({files:clone(g.files),scores:clone(g.scores),avg:+avg(g.scores),crit:crit(g),parser:g.parser?clone(g.parser):null,fixed:{...g.fixed}});
 async function score(g,idx){const F=["fun factor and engagement","bugs and edge cases","game balance and scoring","performance with 12+ players","UX and GUI clarity"];
- const sample=Object.entries(g.files).map(([p,c])=>`--${p}\n${c.slice(0,500)}`).join("\n---\n").slice(0,2200);
- const pr=g.parser?"Parser: "+Object.values(g.parser).map(r=>r.name.split("/").pop()+(r.syntaxOk?" ok":" FAILS")).join(", "):"";
+ const sample=Object.entries(g.files).map(([p,c])=>`--${p}\n${c.slice(0,2200)}`).join("\n---\n").slice(0,11000);
+ const pr=g.parser?"Machine check (facts): "+(critList(g).join("; ")||"all files parse and no undefined variables"):"";
  return Promise.all(idx.map(async i=>{const b=S("test").bots[i];bs(g,"test",b[0],"work");
-  const t=await ai(`You are ${b[0]}, a Roblox tester for ${F[i]}. The code is shown as excerpts, so judge only what you can see. FIRST LINE must be "Score: X/10". Then 2 sentences of specific feedback and one concrete issue to fix.`,`Game: ${g.plan.slice(0,300)}\n${pr}\nCode:\n${sample}`,230,g);
+  const t=await ai(`You are ${b[0]}, a Roblox tester for ${F[i]}. Judge only what you can see. If the machine check lists a problem, a score above 5 is not allowed. FIRST LINE must be "Score: X/10". Then 2 sentences of specific feedback and one concrete issue to fix.`,`Game: ${g.plan.slice(0,300)}\n${pr}\nCode:\n${sample}`,230,g);
   bs(g,"test",b[0],"done");const m=t.match(/Score:\s*(\d+)/i);return{n:b[0],s:m?Math.min(10,+m[1]):5,fb:t.replace(/Score:\s*\d+\/10\s*/i,"").trim()}}))}
 function testVerdict(g){const lo=g.scores.slice().sort((a,b)=>a.s-b.s)[0],hi=g.scores.slice().sort((a,b)=>b.s-a.s)[0];
- g.v.test={good:[`average score ${avg(g.scores)}/10 (target ${TARGET})`,`${hi.n}: ${hi.fb.split(/(?<=[.!?])\s/)[0]}`],risks:[`${lo.n} (${lo.s}/10): ${lo.fb.split(/(?<=[.!?])\s/)[0]}`],rec:+avg(g.scores)>=TARGET?"APPROVE":"FIX"}}
+ g.v.test={good:[`average score ${avg(g.scores)}/10 (target ${TARGET})`,`${hi.n}: ${hi.fb.split(/(?<=[.!?])\s/)[0]}`],risks:[`${lo.n} (${lo.s}/10): ${lo.fb.split(/(?<=[.!?])\s/)[0]}`],rec:+avg(g.scores)>=TARGET&&crit(g)===0?"APPROVE":"FIX"};if(crit(g))g.v.test.risks.unshift(crit(g)+" critical problem(s): "+critList(g).join(" | "))}
 async function s6(g){setS(g,"test","run");g.scores=await score(g,[0,1,2,3,4]);testVerdict(g);g.best=snap(g);g.st.test="wait";g.st.ship="wait";render()}
 async function redoRatings(all){const g=CUR;const idx=all?g.scores.map((_,i)=>i):Object.keys(g.rsel).filter(k=>g.rsel[k]).map(Number);if(!idx.length||g.running)return;
  g.running=true;g.err="";g.stopped=false;render();
@@ -214,17 +228,27 @@ function togSel(i){const g=CUR;if(g.running)return;g.rsel[i]=!g.rsel[i];render()
 
 async function fixOnce(g){g.round++;const before=clone(g.scores);g.open.fix=true;g.st.fix="run";["Wizard","Coders","Testers"].forEach(n=>g.bot["fix:"+n]="idle");g.bot["fix:Wizard"]="work";render();
  const w=await ai("You are the Wizard. Delegate fixes to the Coders to raise the tester scores. Pick at most 3 files. One line per file, exactly: FILE: <path from the list> | FIX: <specific change>."+(g.lastFail?" "+g.lastFail:""),"Files: "+Object.keys(g.files).join(", ")+"\nTester issues:\n"+before.map(x=>`${x.n} (${x.s}/10): ${x.fb}`).join("\n"),400,g);
- const jobs=w.split("\n").map(l=>/FILE:\s*([^|]+)\|\s*FIX:\s*(.+)/i.exec(l)).filter(Boolean).map(m=>[m[1].replace(/[`*]/g,"").replace(/\.lua$/i,"").trim(),m[2].trim()]).filter(j=>g.files[j[0]]).slice(0,3);
- if(!jobs.length)throw new Error("The Wizard named no valid file to fix. Click Keep improving to try again.");
+ let jobs=[];const seen={};
+ w.split("\n").map(l=>/FILE:\s*([^|]+)\|\s*FIX:\s*(.+)/i.exec(l)).filter(Boolean).forEach(m=>{const k=resolvePath(g,m[1]);if(k&&!seen[k]){seen[k]=1;jobs.push([k,m[2].trim()])}});
+ // Safety net: if the Wizard named nothing usable, pick the files that actually have problems.
+ if(!jobs.length){
+  const fb=before.map(x=>x.fb).join(" ").toLowerCase();
+  const broken=g.parser?Object.values(g.parser).filter(r=>!r.syntaxOk||(r.undefinedGlobals||[]).length).map(r=>r.name):[];
+  const named=Object.keys(g.files).filter(k=>fb.includes(k.split("/").pop().toLowerCase()));
+  [...broken,...named].forEach(k=>{if(g.files[k]&&!seen[k]){seen[k]=1;jobs.push([k,"Fix the problems the testers and the machine check reported: "+(critList(g).join("; ")||before.map(x=>x.fb).join(" ").slice(0,400))])}});
+ }
+ jobs=jobs.slice(0,3);
+ if(!jobs.length)throw new Error("The Wizard named no valid file to fix, and no broken file could be found. Click Keep improving to try again.");
  g.out.fix="Round "+g.round+": Wizard delegated\n"+jobs.map(j=>j[0].split("/").join(" → ")+"\n   fix: "+j[1]).join("\n");g.bot["fix:Wizard"]="done";g.bot["fix:Coders"]="work";render();
- await Promise.all(jobs.map(async j=>{const c=await ai("Expert Roblox Lua scripter. Apply ONLY the requested fix to this script and keep everything else identical. Plain Lua only. Output ONLY the full corrected code.",`Fix: ${j[1]}\n\nScript ${j[0]}:\n${g.files[j[0]].slice(0,7000)}`,1800,g);g.files[j[0]]=code0(c)}));
+ await Promise.all(jobs.map(async j=>{const c=await ai("Expert Roblox Lua scripter. Apply the requested fix to this script and keep everything else working. Plain Lua only. Output ONLY the COMPLETE corrected file from the first line to the last line. Never output a partial patch, never write 'rest unchanged', and finish every table, function and if-block.",`Fix: ${j[1]}\n\nMachine check for this file: ${(g.parser&&g.parser[j[0]]&&(g.parser[j[0]].syntaxOk?((g.parser[j[0]].undefinedGlobals||[]).length?"undefined variables "+g.parser[j[0]].undefinedGlobals.join(", "):"ok"):g.parser[j[0]].error))||"unknown"}\n\nCONTRACT:\n${g.contract||"(none)"}\n\nOther files: ${Object.keys(g.files).join(", ")}\n\nScript ${j[0]}:\n${g.files[j[0]]}`,4000,g);g.files[j[0]]=code0(c)}));
  g.bot["fix:Coders"]="done";g.bot["fix:Testers"]="work";await checkFiles(g);g.scores=await score(g,[0,1,2,3,4]);g.bot["fix:Testers"]="done";
- const a=+avg(g.scores),kept=a>g.best.avg;g.rounds.push({n:g.round,before,now:clone(g.scores),kept,a0:g.best.avg,a1:a});
- if(kept){g.best=snap(g);g.lastFail=""}else{g.files=clone(g.best.files);g.scores=clone(g.best.scores);g.parser=g.best.parser?clone(g.best.parser):null;g.fixed={...g.best.fixed};g.lastFail=`The last attempt scored ${a}, not better than ${g.best.avg}, and was reverted. Try a different approach.`}
+ // Keep a new version only if it has FEWER critical problems, or the same number and a better average. A higher average alone is not enough.
+ const a=+avg(g.scores),c1=crit(g),c0=g.best.crit,kept=c1<c0||(c1===c0&&a>g.best.avg);g.rounds.push({n:g.round,before,now:clone(g.scores),kept,a0:g.best.avg,a1:a,c0,c1});
+ if(kept){g.best=snap(g);g.lastFail=""}else{g.files=clone(g.best.files);g.scores=clone(g.best.scores);g.parser=g.best.parser?clone(g.best.parser):null;g.fixed={...g.best.fixed};g.lastFail=`The last attempt (average ${a}, ${c1} critical problem(s)) was not better than the saved version (average ${g.best.avg}, ${c0} critical problem(s)) and was reverted. Try a different approach.`}
  testVerdict(g);g.st.fix="done";render()}
 async function improve(g){g.running=true;g.err="";g.stopped=false;g.note="";render();
- try{while(+avg(g.scores)<TARGET&&g.round<MAXR&&!g.stopped)await fixOnce(g);
-  g.note=+avg(g.scores)>=TARGET?`Target reached: average ${avg(g.scores)}/10.`:`Stopped at average ${avg(g.scores)}/10 after ${g.round} fix round(s) (max ${MAXR}). Click Keep improving, or redo ratings you doubt.`}
+ try{while((+avg(g.scores)<TARGET||crit(g)>0)&&g.round<MAXR&&!g.stopped)await fixOnce(g);
+  g.note=(+avg(g.scores)>=TARGET&&crit(g)===0)?`Target reached: average ${avg(g.scores)}/10 and no critical problems.`:crit(g)>0?`Stopped after ${g.round} fix round(s) with ${crit(g)} critical problem(s) left: ${critList(g).join(" | ")}. Click Keep improving, or fix those by hand in Studio.`:`Stopped at average ${avg(g.scores)}/10 after ${g.round} fix round(s) (max ${MAXR}). Click Keep improving, or redo ratings you doubt.`}
  catch(e){fail(g,e)}g.running=false;render()}
 function keepImproving(){const g=CUR;g.round=Math.max(0,g.round-2);improve(g)}
 function ship(){const g=CUR;g.stopped=true;g.shipped=true;g.st.test="done";g.st.ship="done";g.tab="files";render()}
@@ -237,9 +261,10 @@ async function helper(text){text=(text||"").trim();const g=CUR;if(!g||!g.plan||!
  const ctx=`Game: ${g.plan.slice(0,500)}\nExisting files: ${Object.keys(g.files).join(", ")}`;
  try{step(0,"run");const w=await ai("You are the Wizard. Decide the single file to add. Reply exactly:\nPATH: ServiceName/FileName\nPURPOSE: one sentence",ctx+"\nRequest: "+text,150);
   const path=((/PATH:\s*([^\n]+)/i.exec(w)||[])[1]||"ServerScriptService/NewScript").replace(/\.lua$/i,"").replace(/[`*]/g,"").trim();step(0,"done");
+  if(g.files[path]){HP.st[0][1]="err";HP.msg=path+" already exists in this game. The Helper only adds NEW files. Describe a different file, or edit that one in Studio.";$("hb").disabled=false;return render()}
   step(1,"run");const d=await ai("You are the Designer. List the objects, RemoteEvents, services and exact names this script needs. Short.",ctx+"\nFile: "+path+"\n"+w,300);step(1,"done");
-  step(2,"run");let c=code0(await ai(`Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue. Location: ${path}. Output ONLY Lua code.`,ctx+"\n"+w+"\nDesign:\n"+d,1200));step(2,"done");
-  step(3,"run");const r=await validate([{name:path,source:c}]);if(r&&r[0]&&!r[0].syntaxOk){c=code0(await ai("Fix the syntax error. Plain Lua only. Output ONLY the corrected code.","Error: "+r[0].error+"\n\n"+c,1200));g.fixed[path]=true}step(3,"done");
+  step(2,"run");let c=code0(await ai(`Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue. Location: ${path}. Every variable must be declared and spelled consistently. Write the whole file and finish every 'end'. Output ONLY Lua code.`,ctx+"\nCONTRACT (use these exact names):\n"+(g.contract||"(none)")+"\n"+w+"\nDesign:\n"+d,3500));step(2,"done");
+  step(3,"run");const r=await validate([{name:path,source:c}]);if(r&&r[0]&&!r[0].syntaxOk){c=code0(await ai("Fix the syntax error. Plain Lua only. Output ONLY the complete corrected file.","Error: "+r[0].error+"\n\n"+c,3500));g.fixed[path]=true}step(3,"done");
   step(4,"run");const t=await ai("You are a tester. Reply 'Score: X/10' then one sentence.","Code:\n"+c.slice(0,1500));step(4,"done");
   g.files[path]=c;const v=await validate([{name:path,source:c}]);if(v&&v[0]){g.parser=g.parser||{};g.parser[path]=v[0]}
   HP.msg=`Added ${path}. Tester: ${t.trim().slice(0,160)}`;g.tab="files";$("hin").value=""}
@@ -248,7 +273,7 @@ async function helper(text){text=(text||"").trim();const g=CUR;if(!g||!g.plan||!
 
 const cols=(t,a)=>`<div class="vd APPROVE" style="border-left-color:${t}"><div class="c">${a.map(x=>`<div><h5>${x[0]}</h5><ul>${x[1].map(y=>`<li>${esc(y)}</li>`).join("")||"<li>-</li>"}</ul></div>`).join("")}</div></div>`;
 const vd=v=>`<div class="vd ${v.rec}"><div class="h">Verdict: ${v.rec==="APPROVE"?"APPROVE":"FIX BEFORE APPROVING"}</div><div class="c"><div><h5>What is good</h5><ul>${v.good.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>-</li>"}</ul></div><div><h5>Watch out</h5><ul>${v.risks.map(x=>`<li>${esc(x)}</li>`).join("")||"<li>nothing major</li>"}</ul></div></div></div>`;
-const rtab=r=>`<div class="lbl">Round ${r.n}: average ${r.a0} → ${r.a1} (${r.kept?"kept":"reverted to the better version"})</div><table class="cmp"><tr><th>Tester</th><th>Before</th><th>After</th><th>Change</th></tr>${r.now.map((x,i)=>{const p=r.before[i]?r.before[i].s:0,d=x.s-p;return `<tr><td>${x.n}</td><td>${p}/10</td><td>${x.s}/10</td><td class="${d>0?"up":d<0?"dn":""}">${d>0?"+":""}${d}</td></tr>`}).join("")}</table>`;
+const rtab=r=>`<div class="lbl">Round ${r.n}: average ${r.a0} → ${r.a1} (${r.kept?"kept":"reverted to the better version"}) · critical problems ${r.c0==null?"-":r.c0} → ${r.c1==null?"-":r.c1}</div><table class="cmp"><tr><th>Tester</th><th>Before</th><th>After</th><th>Change</th></tr>${r.now.map((x,i)=>{const p=r.before[i]?r.before[i].s:0,d=x.s-p;return `<tr><td>${x.n}</td><td>${p}/10</td><td>${x.s}/10</td><td class="${d>0?"up":d<0?"dn":""}">${d>0?"+":""}${d}</td></tr>`}).join("")}</table>`;
 function stg(g,s){const st=g.st[s.id]||"idle";if(s.id==="fix"&&!g.st.fix)return"";const op=g.open[s.id]!==undefined?g.open[s.id]:(st==="run"||st==="wait"),lab={idle:"Waiting",run:"Working",wait:"Needs you",done:"Done",err:"Error"}[st];
  let b=`<p class="role">${esc(s.role)}</p><div class="bots">${s.bots.map(x=>{const k=g.bot[s.id+":"+x[0]]||"idle";return `<div class="bc ${k}"><i></i><b>${x[0]}</b><span>${esc(x[1])}</span></div>`}).join("")}</div>`;
  if(s.id==="idea"&&g.ideas.length){b+=`<div class="lbl">${st==="wait"?"Choose one idea":"Ideas"}</div><div class="ideas">${g.ideas.map((x,i)=>`<div class="idc ${g.sel===i?"sel":""}"><b>${esc(x.title)}</b><p>${esc(x.text)}</p><button class="btn sm ${g.sel===i?"gr":""}" ${g.running?"disabled":""} onclick="pick(${i})">${g.sel===i?"Chosen":"Choose this idea"}</button></div>`).join("")}</div>`;
@@ -267,7 +292,7 @@ function stg(g,s){const st=g.st[s.id]||"idle";if(s.id==="fix"&&!g.st.fix)return"
  if(s.id==="fix")b+=g.rounds.map(rtab).join("");
  if(g.v[s.id])b+=vd(g.v[s.id]);
  if(s.id==="wiz"&&st==="wait")b+=`<div class="act"><button class="btn gr" onclick="approve()">Approve, run testers</button><button class="btn ol" onclick="jump('idea')">Choose a different idea</button></div>`;
- if(s.id==="test"&&g.scores.length&&!g.shipped){b+=(g.note?`<div class="mut" style="margin-top:8px">${esc(g.note)}</div>`:"")+`<div class="act">${+avg(g.scores)<TARGET?`<button class="btn" ${g.running?"disabled":""} onclick="keepImproving()">Keep improving to ${TARGET}/10</button>`:""}<button class="btn gr" ${g.running?"disabled":""} onclick="ship()">Ship it (stops all bots)</button></div>`}
+ if(s.id==="test"&&g.scores.length&&!g.shipped){b+=(g.note?`<div class="mut" style="margin-top:8px">${esc(g.note)}</div>`:"")+`<div class="act">${(+avg(g.scores)<TARGET||crit(g)>0)?`<button class="btn" ${g.running?"disabled":""} onclick="keepImproving()">Keep improving to ${TARGET}/10</button>`:""}<button class="btn gr" ${g.running?"disabled":""} onclick="ship()">Ship it (stops all bots)</button></div>`}
  if(s.id==="ship"&&(st==="wait"||st==="done"))b+=(g.shipped?`<div class="vd APPROVE"><div class="h">Shipped. Copy the scripts from the Files tab.</div></div>`:"")+`<div class="act"><button class="btn ol sm" onclick="pro()">${g.up?"Re-run":"Run"} ProBot</button></div>`+(g.up?`<div class="upg">${g.up.map(u=>`<div><b>${esc(u[0])}</b>${esc(u[1])} impact · ${esc(u[2])} effort<br>${esc(u[3])}</div>`).join("")}</div>`:"");
  return `<div class="stg ${st==="err"?"err":""}" id="s-${s.id}"><div class="sh" style="background:${s.bg}" onclick="tg('${s.id}')">${px(s.ic,s.col)}<b>${s.t}</b><span class="bd">${lab}</span><em>${op?"▲":"▼"}</em></div><div class="sb ${op?"o":""}">${b}</div></div>`}
 function view(g){
