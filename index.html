@@ -98,13 +98,28 @@ let GAMES=[],CUR=null;
 let HP={st:[["Wizard","idle"],["Designer","idle"],["Coder","idle"],["Reviewer","idle"],["Tester","idle"]],msg:""};
 $("logo").innerHTML=px("wizard","#7c6af5")+"Roblox AI Studio";$("hh").innerHTML=px("help","#4a9eff")+"<b>Helper bot</b>";
 
+let _active=0;const _queue=[];
+function _slot(){return new Promise(res=>{const go=()=>{if(_active<2){_active++;res()}else _queue.push(go)};go()})}
+function _free(){_active--;const n=_queue.shift();if(n)n()}
+const _sleep=ms=>new Promise(r=>setTimeout(r,ms));
 async function ai(sys,user,max,g){
  if(g&&g.stopped)throw new Error("Stopped");
- let r;try{r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:sys,messages:[{role:"user",content:user}],max_tokens:max||1500})})}catch(e){throw new Error("Network error: is your deployment live?")}
- const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(e){throw new Error("Server returned non-JSON (status "+r.status+"). Check Vercel function logs.")}
- if(!r.ok)throw new Error(d.error||"API error "+r.status);
- if(!d.content)throw new Error(d.error||"No content in response.");
- return d.content.map(b=>b.text||"").join("");
+ await _slot();
+ try{
+  for(let t=0;t<3;t++){
+   if(g&&g.stopped)throw new Error("Stopped");
+   try{
+    let r;try{r=await fetch("/api/chat",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({system:sys,messages:[{role:"user",content:user}],max_tokens:max||1500})})}catch(e){const ne=new Error("Network error: is your deployment live?");ne.retry=true;throw ne}
+    const raw=await r.text();let d;try{d=JSON.parse(raw)}catch(e){const je=new Error("Server returned non-JSON (status "+r.status+"). Check Vercel function logs.");je.retry=true;throw je}
+    if(!r.ok){const he=new Error(d.error||"API error "+r.status);he.retry=(r.status===429||r.status===502||r.status===504);throw he}
+    if(!d.content)throw new Error(d.error||"No content in response.");
+    return d.content.map(b=>b.text||"").join("");
+   }catch(e){
+    if(!e.retry||t===2)throw e;
+    await _sleep(4000*(t+1));
+   }
+  }
+ }finally{_free()}
 }
 async function validate(files){try{const r=await fetch("/api/validate-lua",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({files})});const d=await r.json();return r.ok&&d.results?d.results:null}catch(e){return null}}
 const lst=(s,n)=>s?s.split(/\n|;/).map(x=>x.replace(/^[\s*\-\d.]+/,"").trim()).filter(x=>x.length>2).slice(0,n||5):[];
@@ -190,7 +205,7 @@ async function s4(g){setS(g,"review","run");const bots=S("review").bots;bots.for
  await checkFiles(g);
  const all=Object.entries(g.files).map(([p,c])=>`-- ${p}\n${c}`).join("\n---\n").slice(0,12000);
  const P=["SyntaxBot: list Lua syntax errors, undefined variables and bad API calls, with file and fix. If none, say none.","PlacementBot: check server vs client placement. Server scripts must not touch LocalPlayer or UI; LocalScripts cannot use server-only APIs. List problems.","LogicBot: check gameplay logic: does the loop work, win/lose trigger, enemy behaviour? List gaps."];
- const R=await Promise.all(P.map(async(p,i)=>{const r=await ai(p+" Judge only the code given.","Code:\n"+all+"\n\nMachine check results (these are facts):\n"+(critList(g).join("\n")||"no parser problems"),500,g);bs(g,"review",bots[i][0],"done");return r.trim()}));
+ const R=[];for(let i=0;i<P.length;i++){let r;try{r=(await ai(P[i]+" Judge only the code given.","Code:\n"+all+"\n\nMachine check results (these are facts):\n"+(critList(g).join("\n")||"no parser problems"),700,g)).trim()}catch(e){if(e.message==="Stopped")throw e;r="(this bot could not run: "+String(e.message).slice(0,120)+")"}bs(g,"review",bots[i][0],"done");R.push(r)}
  const pr=g.parser?Object.values(g.parser).map(r=>`${r.syntaxOk?"OK  ":"FAIL"} ${r.name}${g.fixed[r.name]?" (auto-fixed once)":""}${r.syntaxOk?"":" - "+r.error}${r.warnings&&r.warnings.length?"\n     warn: "+r.warnings.join("; "):""}`).join("\n"):"Parser check unavailable (could not reach /api/validate-lua).";
  g.out.review="PARSER\n"+pr+"\n\nSyntaxBot:\n"+R[0]+"\n\nPlacementBot:\n"+R[1]+"\n\nLogicBot:\n"+R[2];
  const n=Object.keys(g.files).length,bad=g.parser?Object.values(g.parser).filter(r=>!r.syntaxOk).length:0,warn=g.parser?Object.values(g.parser).reduce((a,r)=>a+(r.warnings?r.warnings.length:0),0):0,miss=anatomy(g).filter(a=>!a.f.length).map(a=>a.n);
