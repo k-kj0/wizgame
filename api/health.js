@@ -7,7 +7,7 @@ function kind(v) {
   return 'unrecognized format';
 }
 
-// Open /api/health in your browser. Shows which variables this deployment sees. Never shows values.
+// Open /api/health in your browser. Shows which variables this deployment sees. Never shows values or lengths.
 module.exports = function handler(req, res) {
   const names = ['OPENROUTER_API_KEY', 'GROQ_API_KEY', 'GROK_API_KEY', 'XAI_API_KEY'];
   const checks = {};
@@ -15,7 +15,6 @@ module.exports = function handler(req, res) {
     const v = process.env[n] || '';
     checks[n] = {
       present: v.length > 0,
-      length: v.length,
       format: kind(v),
       hasSpacesOrNewlines: /\s/.test(v),
     };
