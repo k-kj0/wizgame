@@ -96,7 +96,7 @@ function checkOne(file) {
   return out;
 }
 
-module.exports = function handler(req, res) {
+function handler(req, res) {
   if (guard(req, res, 120)) return;
 
   const files = req.body && req.body.files;
@@ -109,4 +109,9 @@ module.exports = function handler(req, res) {
 
   res.setHeader('Cache-Control', 'no-store');
   return res.status(200).json({ results: files.map(checkOne) });
-};
+}
+
+module.exports = handler;
+// Exposed so the unit tests can call the checker without an HTTP request.
+module.exports.checkOne = checkOne;
+module.exports.luauToPlain = luauToPlain;
