@@ -76,3 +76,9 @@ aside .card{position:sticky;top:64px}.step{display:flex;gap:8px;align-items:cent
 .nl{margin-left:auto;color:var(--t2);text-decoration:none;font-size:.8rem;padding:.4rem .6rem}
 .nl:hover{color:var(--tx)}
 .nl+.ai{margin-left:6px}
+
+/* ---- checks ---- */
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:var(--t3)}
+.dot.ok{background:var(--gr)}.dot.warn{background:var(--am)}.dot.bad{background:var(--rd)}.dot.info{background:var(--bl)}
+.walk ol{margin-left:1.2rem;color:var(--t2);font-size:.84rem;line-height:1.7}
+.walk .act{margin-top:8px}
