@@ -4,9 +4,8 @@ const esc = (s) =>
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;");
-const TARGET = 8,
-  MAXR = 4,
-  QROUNDS = 2; // target average rating, max fix rounds, question rounds
+const MAXR = 4,
+  QROUNDS = 2; // max automatic fix rounds, question rounds
 const ICONS = {
   idea: ["..aaaa..", ".aawwaa.", ".aawaaa.", ".aaaaaa.", "..aaaa..", "...dd...", "...dd...", "..dddd.."],
   level: ["......aa", ".....aaa", "....aa..", "...aa...", "..aa....", ".aa.....", "aaaaaaaa", "dddddddd"],
@@ -91,7 +90,7 @@ const ST = [
       ["MapBot", "Parts + layout"],
       ["PlayerBot", "Player + rules"],
       ["UIBot", "HUD + lighting"],
-      ["SketchBot", "Bird's-eye image"],
+      ["SketchBot", "Top-down layout (drawn by code)"],
     ],
   },
   {
@@ -128,7 +127,7 @@ const ST = [
     bg: "#f1b3ff",
     col: "#a02fc0",
     t: "Wizard Gate",
-    role: "Explains every file in plain words. Nothing is tested until you approve.",
+    role: "Explains every file in plain words. Nothing is checked or fixed until you approve.",
     bots: [["Wizard", "Plain-language walkthrough"]],
   },
   {
@@ -136,14 +135,14 @@ const ST = [
     ic: "test",
     bg: "#ffc08a",
     col: "#c4601a",
-    t: "Testers",
-    role: "Five testers score the game. Click a rating, then Redo, if you do not trust it.",
+    t: "Code Check",
+    role: "Looks at the files that exist: is any required file missing, does every file have a name, type and Studio location, does it parse, do the shared names agree. It gives no scores, because nothing has been played yet. Then it lists your next steps.",
     bots: [
-      ["FunBot", "Fun"],
-      ["BugBot", "Edge cases"],
-      ["BalanceBot", "Fairness"],
-      ["PerfBot", "Many players"],
-      ["UXBot", "UI clarity"],
+      ["FileCheck", "Any file missing?"],
+      ["FormatCheck", "Name, type, location"],
+      ["ParseCheck", "Luau syntax + typos"],
+      ["ContractCheck", "Shared names agree"],
+      ["NextSteps", "What you do next"],
     ],
   },
   {
@@ -152,11 +151,11 @@ const ST = [
     bg: "#ffa8b8",
     col: "#c0304f",
     t: "Fix Rounds",
-    role: "Repeats until the average reaches 8/10: the Wizard delegates, Coders rewrite only the needed files, Testers re-score. A worse result is reverted.",
+    role: "Runs only while blocking problems exist. The Planner turns each problem into a job, the Coders create the missing files or rewrite the broken ones, and the Checker re-runs every check. A round that is not better is reverted.",
     bots: [
-      ["Wizard", "Delegates the fixes"],
-      ["Coders", "Rewrite those files"],
-      ["Testers", "Re-score"],
+      ["Planner", "Turns problems into jobs"],
+      ["Coders", "Create or rewrite files"],
+      ["Checker", "Re-run the checks"],
     ],
   },
   {
@@ -217,6 +216,16 @@ const studioPath = (p) =>
     .split("/")
     .map((x) => (x === "StarterPlayerScripts" ? "StarterPlayer > StarterPlayerScripts" : x))
     .join(" > ");
+const REQUIRED_FILES = [
+  ["ServerScriptService/GameManager", "Game loop, rounds, match timer, scoring, RemoteEvents, win/lose."],
+  ["ServerScriptService/NPCController", "Enemy or hazard spawning and behaviour, damage, respawn."],
+  [
+    "StarterPlayerScripts/PlayerController",
+    "LocalScript: movement, weapon or tool input, effects, RemoteEvent listeners.",
+  ],
+  ["StarterGui/GameGui", "LocalScript: health bar, score, match timer, messages via RemoteEvents."],
+  ["ServerScriptService/MapBuilder", "Build the arena Parts at runtime."],
+];
 const fileExt = (p) => ({ Script: ".server.lua", LocalScript: ".client.lua", ModuleScript: ".lua" })[kind(p)];
 const words = (t) =>
   (
@@ -232,7 +241,7 @@ let HP = {
     ["Designer", "idle"],
     ["Coder", "idle"],
     ["Reviewer", "idle"],
-    ["Tester", "idle"],
+    ["Checker", "idle"],
   ],
   msg: "",
 };
@@ -337,7 +346,6 @@ function sect(t, k, next) {
   return m ? m[1].replace(/\*\*/g, "") : "";
 }
 const code0 = (t) => t.replace(/```lua|```/gi, "").trim();
-const avg = (a) => (a.length ? (a.reduce((n, x) => n + x.s, 0) / a.length).toFixed(1) : "-");
 const clone = (o) => JSON.parse(JSON.stringify(o));
 function pg(id, el) {
   document.querySelectorAll(".page").forEach((p) => p.classList.remove("on"));
@@ -376,17 +384,18 @@ function blank() {
     plan: "",
     design: "",
     svg: "",
-    svgFail: false,
-    imgSrc: "",
     imgState: "",
+    layout: null,
+    artSrc: "",
+    artState: "",
+    chk: null,
+    opinion: "",
     files: {},
     parser: null,
     fixed: {},
-    scores: [],
     rounds: [],
     round: 0,
     best: null,
-    rsel: {},
     lastFail: "",
     note: "",
     v: {},
@@ -514,18 +523,6 @@ function reviewVerdict(g, bot, text, i) {
     } else head = "Parser: every file parses. " + head;
   }
   bset(g, "review", bot, head, tone, text);
-}
-function testerVerdicts(g) {
-  g.scores.forEach((x) =>
-    bset(
-      g,
-      "test",
-      x.n,
-      `${x.s}/10 \u00b7 ${sentence(x.fb)}`,
-      x.s >= 8 ? "ok" : x.s >= 5 ? "warn" : "bad",
-      x.fb,
-    ),
-  );
 }
 function fan(g, sid, fn) {
   return Promise.all(
@@ -846,83 +843,145 @@ async function sBetter(g, r) {
   setS(g, "better", r < QROUNDS ? "run" : "done");
 }
 
-function cleanSvg(t) {
-  const m = /<svg[\s\S]*<\/svg>/i.exec(t);
-  if (!m) return "";
-  let s = m[0]
-    .replace(/<script[\s\S]*?<\/script>/gi, "")
-    .replace(/<foreignObject[\s\S]*?<\/foreignObject>/gi, "")
-    .replace(/\son\w+\s*=\s*("[^"]*"|'[^']*')/gi, "")
-    .replace(/(href|xlink:href)\s*=\s*("[^"]*"|'[^']*')/gi, "");
-  if (!/xmlns=/.test(s)) s = s.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"');
-  return s;
+// ---------- layout drawing ----------
+// The SketchBot no longer asks an image generator for a picture: free image models ignore the spec and
+// return random art. It asks for the arena as numbers and this code draws them, so the picture always
+// matches what was specified (and what the scripts will build).
+const ZONE_KINDS = {
+  floor: ["#3f6b4a", "Floor"],
+  path: ["#9a8a62", "Path"],
+  water: ["#2b6cb0", "Water"],
+  safe: ["#2aa198", "Safe zone"],
+  wall: ["#6b7280", "Wall"],
+  hazard: ["#d64545", "Hazard"],
+  goal: ["#d4a017", "Goal"],
+  spawn: ["#3b82f6", "Spawn"],
+};
+const ZONE_ORDER = ["floor", "path", "water", "safe", "wall", "hazard", "goal", "spawn"];
+function parseLayout(t) {
+  const m = /\{[\s\S]*\}/.exec(String(t || ""));
+  if (!m) throw new Error("no JSON found");
+  const o = JSON.parse(m[0]);
+  const num = (v, lo, hi, d) => {
+    v = Number(v);
+    return Number.isFinite(v) ? Math.min(hi, Math.max(lo, v)) : d;
+  };
+  const arena = { w: num(o.arena && o.arena.w, 20, 2000, 100), d: num(o.arena && o.arena.d, 20, 2000, 100) };
+  const zones = (Array.isArray(o.zones) ? o.zones : []).slice(0, 20).map((z) => ({
+    name: String((z && z.name) || "Zone").slice(0, 32),
+    kind: z && ZONE_KINDS[z.kind] ? z.kind : "floor",
+    x: num(z && z.x, -2000, 2000, 0),
+    z: num(z && z.z, -2000, 2000, 0),
+    w: num(z && z.w, 1, 2000, 10),
+    d: num(z && z.d, 1, 2000, 10),
+  }));
+  if (zones.length < 2) throw new Error("fewer than 2 zones");
+  return { arena, zones };
 }
-async function drawSvg(g) {
-  g.svgFail = false;
-  bset(
-    g,
-    "design",
-    "SketchBot",
-    "Image service did not respond, so it is drawing an SVG layout instead",
-    "warn",
-    "",
-  );
-  for (let k = 0; k < 2 && !g.svg; k++) {
-    try {
-      g.svg = cleanSvg(
-        await ai(
-          "Draw a top-down bird's-eye 2D layout of this Roblox game arena as ONE SVG with viewBox 0 0 400 300. Flat colors, simple shapes (rect, circle, polygon) and short text labels only. Label spawn points, hazards, goals and zones. No scripts, no images. Output ONLY the complete <svg>...</svg> element.",
-          "Game: " + g.plan.slice(0, 600),
-          2500,
-        ),
-      );
-    } catch (e) {}
-  }
-  if (!g.svg) {
-    g.svgFail = true;
-    bset(g, "design", "SketchBot", "No image or layout could be produced. Use Redo image", "bad", "");
-  } else
-    bset(g, "design", "SketchBot", "Drew an AI-made SVG layout (the image service was down)", "warn", "");
-  render();
+// Only numbers go into the SVG (zone names are shown in the HTML table, escaped), so it is safe to embed.
+function layoutSvg(L) {
+  const W = 640,
+    H = 480,
+    M = 30;
+  const s = Math.min((W - 2 * M) / L.arena.w, (H - 2 * M) / L.arena.d);
+  const ox = (W - L.arena.w * s) / 2,
+    oy = (H - L.arena.d * s) / 2;
+  const f = (n) => Math.round(n * 10) / 10;
+  const step = [5, 10, 20, 25, 50, 100, 200, 500].find((v) => L.arena.w / v <= 12) || 500;
+  let grid = "";
+  for (let x = 0; x <= L.arena.w; x += step)
+    grid += `<line x1="${f(ox + x * s)}" y1="${f(oy)}" x2="${f(ox + x * s)}" y2="${f(oy + L.arena.d * s)}"/>`;
+  for (let z = 0; z <= L.arena.d; z += step)
+    grid += `<line x1="${f(ox)}" y1="${f(oy + z * s)}" x2="${f(ox + L.arena.w * s)}" y2="${f(oy + z * s)}"/>`;
+  const shapes = L.zones
+    .map((z, i) => ({ z, i }))
+    .sort((a, b) => ZONE_ORDER.indexOf(a.z.kind) - ZONE_ORDER.indexOf(b.z.kind))
+    .map(({ z, i }) => {
+      const x = ox + (z.x + L.arena.w / 2 - z.w / 2) * s,
+        y = oy + (z.z + L.arena.d / 2 - z.d / 2) * s;
+      const cx = x + (z.w * s) / 2,
+        cy = y + (z.d * s) / 2;
+      return `<rect x="${f(x)}" y="${f(y)}" width="${f(z.w * s)}" height="${f(z.d * s)}" rx="3" fill="${ZONE_KINDS[z.kind][0]}" fill-opacity=".88" stroke="#fff" stroke-opacity=".55"/><circle cx="${f(cx)}" cy="${f(cy)}" r="9" fill="#0b0d12"/><text x="${f(cx)}" y="${f(cy + 3.5)}" text-anchor="middle" font-size="10" font-family="sans-serif" font-weight="700" fill="#fff">${i + 1}</text>`;
+    })
+    .join("");
+  const aw = f(L.arena.w * s),
+    ad = f(L.arena.d * s);
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${W} ${H}"><rect width="${W}" height="${H}" fill="#10131a"/><rect x="${f(ox)}" y="${f(oy)}" width="${aw}" height="${ad}" fill="#1a1f2b"/><g stroke="#ffffff" stroke-opacity=".07">${grid}</g><clipPath id="a"><rect x="${f(ox)}" y="${f(oy)}" width="${aw}" height="${ad}"/></clipPath><g clip-path="url(#a)">${shapes}</g><rect x="${f(ox)}" y="${f(oy)}" width="${aw}" height="${ad}" fill="none" stroke="#8b93a7"/><text x="${f(ox)}" y="${f(oy + L.arena.d * s + 16)}" font-size="11" font-family="sans-serif" fill="#8b93a7">${L.arena.w} x ${L.arena.d} studs, top-down (one grid square = ${step} studs)</text></svg>`;
 }
-function startImg(g) {
+async function startLayout(g) {
   g.imgState = "load";
-  g.imgSrc = "";
+  g.layout = null;
   g.svg = "";
   g.vb["design:SketchBot"] = [];
   bs(g, "design", "SketchBot", "work");
-  const t = g.plan.split("\n")[0].replace(/\s+/g, " ").slice(0, 260);
+  const sys =
+    'You are the SketchBot. Turn the map spec into a top-down layout. Reply with ONLY one JSON object, no markdown, in exactly this shape: {"arena":{"w":120,"d":120},"zones":[{"name":"Cannon Ring","kind":"hazard","x":0,"z":0,"w":30,"d":30}]}. Units are Roblox studs, the arena centre is 0,0, and x and z are the CENTRE of each zone. kind must be one of: floor, path, water, safe, wall, hazard, goal, spawn. Use 6 to 14 zones, list the main floor first, and reuse the names and numbers from the map spec.';
+  const user = "Game: " + g.plan.slice(0, 500) + "\nMap spec:\n" + g.design.slice(0, 1800);
+  for (let k = 0; k < 2 && !g.layout; k++) {
+    try {
+      g.layout = parseLayout(await ai(sys, user, 900, g));
+    } catch (e) {
+      if (e.message === "Stopped") throw e;
+    }
+  }
+  if (g.layout) {
+    g.svg = layoutSvg(g.layout);
+    g.imgState = "ok";
+    bset(
+      g,
+      "design",
+      "SketchBot",
+      `Drew a top-down layout with ${g.layout.zones.length} zones. It is drawn by code from the MapBot numbers, so it matches the spec`,
+      "ok",
+      "",
+    );
+    bs(g, "design", "SketchBot", "done");
+  } else {
+    g.imgState = "fail";
+    bset(
+      g,
+      "design",
+      "SketchBot",
+      "The model did not return a readable layout. Click Redo layout",
+      "bad",
+      "",
+    );
+    bs(g, "design", "SketchBot", "err");
+  }
+  render();
+}
+// Optional, on request only. Free image models cannot follow a spec, so this is mood art, never a plan.
+function conceptArt(g) {
+  g.artState = "load";
+  g.artSrc = "";
+  render();
   const url =
     "https://image.pollinations.ai/prompt/" +
     encodeURIComponent(
-      "top-down bird's eye view concept art of a Roblox-style game arena, low-poly, colorful, clear zones and paths, no text. " +
-        t,
+      "low-poly colorful game arena concept art, mood only. " +
+        g.plan.split("\n")[0].replace(/\s+/g, " ").slice(0, 200),
     ) +
     "?width=768&height=512&nologo=true&seed=" +
     Math.floor(Math.random() * 1e6);
   const im = new Image();
   im.onload = () => {
-    g.imgSrc = url;
-    g.imgState = "ok";
-    bset(g, "design", "SketchBot", "Generated a bird's-eye image of the arena", "ok", "");
-    bs(g, "design", "SketchBot", "done");
+    g.artSrc = url;
+    g.artState = "ok";
+    render();
   };
   im.onerror = () => {
-    if (g.imgState !== "ok") {
-      g.imgState = "fail";
-      bs(g, "design", "SketchBot", "err");
-      drawSvg(g);
-    }
+    g.artState = "fail";
+    render();
   };
   im.src = url;
   setTimeout(() => {
-    if (g.imgState === "load") {
-      g.imgState = "fail";
-      bs(g, "design", "SketchBot", "err");
-      drawSvg(g);
+    if (g.artState === "load") {
+      g.artState = "fail";
+      render();
     }
   }, 60000);
 }
+
 async function s2(g) {
   setS(g, "design", "run");
   const T = [
@@ -946,10 +1005,20 @@ async function s2(g) {
     .map((x, k) => `== ${S("design").bots[k][0]} ==\n${x.trim()}`)
     .join("\n\n");
   g.out.design = g.design;
-  startImg(g);
+  await startLayout(g);
   setS(g, "design", "done");
 }
 
+// Writes one script. Used for the first pass and again when a fix round has to create a missing file.
+async function writeFile(g, f) {
+  const c = await ai(
+    `Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue, use task.wait/task.spawn, game:GetService(). Every variable must be declared before use and spelled exactly the same everywhere. Never leave a table, function or if-block unfinished: write the file from first line to last line and finish with all 'end's. Keep it compact so it fits. Follow the CONTRACT names exactly. Location: ${f[0]}. Output ONLY Lua code, no markdown.`,
+    `Game:\n${g.plan.slice(0, 1500)}\nDesign:\n${g.design.slice(0, 2500)}\nCONTRACT (use these exact names):\n${g.contract}\nOther files in this game: ${REQUIRED_FILES.map((x) => x[0]).join(", ")}\nFile: ${f[0]}\nJob: ${f[1]}`,
+    3500,
+    g,
+  );
+  g.files[f[0]] = code0(c);
+}
 async function s3(g) {
   setS(g, "code", "run");
   // One shared "contract" so every script uses the SAME names for RemoteEvents, folders and Parts. This stops files from disagreeing with each other.
@@ -960,26 +1029,9 @@ async function s3(g) {
     g,
   );
   g.out.contract = g.contract;
-  const F = [
-    ["ServerScriptService/GameManager", "Game loop, rounds, match timer, scoring, RemoteEvents, win/lose."],
-    ["ServerScriptService/NPCController", "Enemy or hazard spawning and behaviour, damage, respawn."],
-    [
-      "StarterPlayerScripts/PlayerController",
-      "LocalScript: movement, weapon or tool input, effects, RemoteEvent listeners.",
-    ],
-    ["StarterGui/GameGui", "LocalScript: health bar, score, match timer, messages via RemoteEvents."],
-    ["ServerScriptService/MapBuilder", "Build the arena Parts at runtime."],
-  ];
   await fan(g, "code", async (b, i) => {
-    const f = F[i];
-    const c = await ai(
-      `Expert Roblox Lua scripter. Write a COMPLETE RUNNABLE script. Plain Lua only: no type annotations, no continue, use task.wait/task.spawn, game:GetService(). Every variable must be declared before use and spelled exactly the same everywhere. Never leave a table, function or if-block unfinished: write the file from first line to last line and finish with all 'end's. Keep it compact so it fits. Follow the CONTRACT names exactly. Location: ${f[0]}. Output ONLY Lua code, no markdown.`,
-      `Game:\n${g.plan.slice(0, 1500)}\nDesign:\n${g.design.slice(0, 2500)}\nCONTRACT (use these exact names):\n${g.contract}\nOther files in this game: ${F.map((x) => x[0]).join(", ")}\nFile: ${f[0]}\nJob: ${f[1]}`,
-      3500,
-      g,
-    );
-    g.files[f[0]] = code0(c);
-    g.botFile[b[0]] = f[0];
+    await writeFile(g, REQUIRED_FILES[i]);
+    g.botFile[b[0]] = REQUIRED_FILES[i][0];
   });
   g.out.code = Object.entries(g.files)
     .map(([p, c]) => `${p.split("/").join(" → ")}  (${kind(p)}, ${c.split("\n").length} lines)`)
@@ -1163,17 +1215,11 @@ async function approve() {
   }
   g.running = false;
   render();
-  if (!g.err && g.scores.length) await improve(g);
+  if (!g.err && g.chk) await improve(g);
 }
 
-// "Critical" = a file that does not parse, or uses a variable that does not exist. These block approval no matter what the average score is.
-const crit = (g) =>
-  g.parser
-    ? Object.values(g.parser).reduce(
-        (n, r) => n + (r.syntaxOk ? 0 : 1) + (r.undefinedGlobals || []).length,
-        0,
-      )
-    : 0;
+// Files that do not parse, or use a variable that does not exist (used by the SyntaxBot verdict and review summary).
+const crit = (g) => critList(g).length;
 const critList = (g) =>
   g.parser
     ? Object.values(g.parser)
@@ -1200,230 +1246,379 @@ function resolvePath(g, raw) {
   k = keys.find((x) => x.toLowerCase().split("/").pop() === base);
   return k || null;
 }
-const snap = (g) => ({
-  files: clone(g.files),
-  scores: clone(g.scores),
-  avg: +avg(g.scores),
-  crit: crit(g),
-  parser: g.parser ? clone(g.parser) : null,
-  fixed: { ...g.fixed },
-});
-async function score(g, idx) {
-  const F = [
-    "fun factor and engagement",
-    "bugs and edge cases",
-    "game balance and scoring",
-    "performance with 12+ players",
-    "UX and GUI clarity",
-  ];
-  const sample = Object.entries(g.files)
-    .map(([p, c]) => `--${p}\n${c.slice(0, 2200)}`)
-    .join("\n---\n")
-    .slice(0, 11000);
-  const pr = g.parser
-    ? "Machine check (facts): " + (critList(g).join("; ") || "all files parse and no undefined variables")
-    : "";
-  return Promise.all(
-    idx.map(async (i) => {
-      const b = S("test").bots[i];
-      bs(g, "test", b[0], "work");
-      const t = await ai(
-        `You are ${b[0]}, a Roblox tester for ${F[i]}. Judge only what you can see. If the machine check lists a problem, a score above 5 is not allowed. FIRST LINE must be "Score: X/10". Then 2 sentences of specific feedback and one concrete issue to fix.`,
-        `Game: ${g.plan.slice(0, 300)}\n${pr}\nCode:\n${sample}`,
-        230,
-        g,
-      );
-      bs(g, "test", b[0], "done");
-      const m = t.match(/Score:\s*(\d+)/i);
-      return { n: b[0], s: m ? Math.min(10, +m[1]) : 5, fb: t.replace(/Score:\s*\d+\/10\s*/i, "").trim() };
+// ---------- deterministic checks: no AI opinions, no scores ----------
+// These look only at the files that actually exist. Nothing here guesses how fun the game is,
+// because nothing has been played yet.
+const PATH_OK = /^(ServerScriptService|StarterPlayerScripts|StarterGui|ReplicatedStorage)(\/[A-Za-z0-9_]+)+$/;
+const stripComments = (c) => c.replace(/--\[(=*)\[[\s\S]*?\]\1\]/g, "").replace(/--.*$/gm, "");
+const isStub = (c) => c.split("\n").filter((l) => l.trim() && !/^\s*--/.test(l)).length < 6;
+
+// Name / type / location problems in one file. sev "bad" blocks approval, "warn" is advice.
+function fileIssues(g, p) {
+  const c = g.files[p] || "",
+    code = stripComments(c),
+    k = kind(p),
+    out = [];
+  const add = (sev, text) => out.push({ file: p, sev, text });
+  if (!PATH_OK.test(p))
+    add(
+      "bad",
+      "location is not under ServerScriptService, StarterPlayerScripts, StarterGui or ReplicatedStorage",
+    );
+  if (/```/.test(c)) add("bad", "contains markdown code fences, which are not Lua");
+  if (k === "LocalScript" && /\b(ServerStorage|ServerScriptService|DataStoreService)\b/.test(code))
+    add("bad", "LocalScript uses a server-only service, which errors on the client");
+  if (k === "LocalScript" && /Instance\.new\(\s*["']RemoteEvent["']/.test(code))
+    add("bad", "LocalScript creates a RemoteEvent; only a server Script should create them");
+  if (k === "Script" && /\bLocalPlayer\b|UserInputService/.test(code))
+    add("warn", "server Script uses client-only APIs (LocalPlayer / UserInputService)");
+  if (k === "ModuleScript" && !/\breturn\b/.test(code)) add("bad", "ModuleScript never returns a value");
+  return out;
+}
+
+function nextSteps(g, bad, warn) {
+  const n = Object.keys(g.files).length,
+    s = [];
+  if (bad)
+    s.push(
+      `Fix the ${bad} blocking problem(s) listed above first. Use the button below, or fix them by hand.`,
+    );
+  s.push("Open Roblox Studio and start a new Baseplate place.");
+  s.push(
+    `Create the ${n} scripts exactly as listed in the Files tab (same type, same location, same name), then paste each script's code in.`,
+  );
+  s.push(
+    "Press Play (F5) and keep the Output window open. Red text is an error: copy it into the Helper bot.",
+  );
+  s.push("Test with two players: Test tab, Clients and Servers, Start with 2 players.");
+  ((g.ideaNow && g.ideaNow.levels) || []).forEach((l, i) =>
+    s.push(
+      `Playtest level ${i + 1} ("${l.slice(0, 80)}"): confirm it starts, the timer and score update, and it ends correctly.`,
+    ),
+  );
+  if (g.contract)
+    s.push("Tune the shared numbers in the CONTRACT (speeds, health, round length) until it feels right.");
+  if (warn)
+    s.push("Review the warnings above. Replace wait/spawn/delay with task.wait/task.spawn/task.delay.");
+  s.push("Publish a private test place and have a friend play it before you share it widely.");
+  return s;
+}
+
+function runChecks(g) {
+  const items = [],
+    issues = [],
+    files = Object.keys(g.files);
+
+  // 1) FileCheck: is any required file missing or just an empty stub?
+  const missing = REQUIRED_FILES.filter((f) => !g.files[f[0]] || isStub(g.files[f[0]]));
+  missing.forEach((f) =>
+    issues.push({
+      file: f[0],
+      sev: "bad",
+      kind: "missing",
+      text: g.files[f[0]] ? "file is almost empty" : "file is missing",
     }),
   );
+  items.push({
+    bot: "FileCheck",
+    tone: missing.length ? "bad" : "ok",
+    head: missing.length
+      ? `${missing.length} of ${REQUIRED_FILES.length} required file(s) missing or empty: ${missing.map((f) => f[0].split("/").pop()).join(", ")}`
+      : `All ${REQUIRED_FILES.length} required files are present`,
+    more: REQUIRED_FILES.map(
+      (f) => `${missing.includes(f) ? "MISSING " : "present "} ${studioPath(f[0])} (${kind(f[0])}): ${f[1]}`,
+    ).join("\n"),
+  });
+
+  // 2) FormatCheck: valid name, type and Studio location, and the right kind of code for that type.
+  const fmt = [];
+  files.forEach((p) =>
+    fileIssues(g, p).forEach((i) => {
+      issues.push(i);
+      fmt.push(i);
+    }),
+  );
+  items.push({
+    bot: "FormatCheck",
+    tone: fmt.some((i) => i.sev === "bad") ? "bad" : fmt.length ? "warn" : "ok",
+    head: fmt.length
+      ? `${fmt.length} name / type / location problem(s)`
+      : `All ${files.length} files have a valid name, type and Studio location`,
+    more: fmt.map((i) => `${studioPath(i.file)}: ${i.text}`).join("\n"),
+  });
+
+  // 3) ParseCheck: the Luau parser (syntax) and the undeclared-variable check, both run on the server.
+  if (!g.parser) {
+    items.push({
+      bot: "ParseCheck",
+      tone: "warn",
+      head: "The syntax checker did not respond, so syntax was NOT verified",
+      more: "",
+    });
+  } else {
+    const prs = Object.values(g.parser);
+    prs.forEach((r) => {
+      if (!r.syntaxOk)
+        issues.push({ file: r.name, sev: "bad", kind: "parse", text: "does not parse: " + r.error });
+      else if ((r.undefinedGlobals || []).length)
+        issues.push({
+          file: r.name,
+          sev: "bad",
+          kind: "parse",
+          text: "uses undeclared variable(s): " + r.undefinedGlobals.join(", "),
+        });
+      (r.warnings || [])
+        .filter((w) => !/undefined variable/.test(w))
+        .forEach((w) => issues.push({ file: r.name, sev: "warn", kind: "api", text: w }));
+    });
+    const badP = prs.filter((r) => !r.syntaxOk || (r.undefinedGlobals || []).length).length;
+    const skipped = prs.filter((r) => (r.notes || []).length).length;
+    items.push({
+      bot: "ParseCheck",
+      tone: badP ? "bad" : "ok",
+      head:
+        `${prs.length - badP} of ${prs.length} files parse cleanly (${(prs[0] && prs[0].engine) || "unknown"} parser)` +
+        (skipped
+          ? `; ${skipped} file(s) use Luau-only syntax so the undeclared-variable check was skipped`
+          : ""),
+      more: prs
+        .map(
+          (r) =>
+            `${r.name}: ${r.syntaxOk ? "parses" : r.error}${(r.notes || []).length ? " | " + r.notes.join(" ") : ""}`,
+        )
+        .join("\n"),
+    });
+  }
+
+  // 4) ContractCheck: do the RemoteEvent names the contract promised actually appear, and is every looked-up name created somewhere?
+  const all = files.map((p) => stripComments(g.files[p])).join("\n");
+  const STOP =
+    /^(RemoteEvents?|RemoteFunctions?|Server|Client|server|client|event|events|from|args|arguments|and|the)$/i;
+  const cNames = [
+    ...new Set(
+      (g.contract || "")
+        .split("\n")
+        .filter((l) => /->/.test(l))
+        .map((l) => (l.match(/[A-Za-z_][A-Za-z0-9_]{2,}/g) || []).find((w) => !STOP.test(w)))
+        .filter(Boolean),
+    ),
+  ];
+  const unused = cNames.filter((n) => !new RegExp("[\"']" + n + "[\"']").test(all));
+  const made = new Set(cNames);
+  [
+    /\.Name\s*=\s*["']([A-Za-z0-9_]+)["']/g,
+    /(?:[Gg]etOrCreate|[Cc]reate|[Mm]ake|[Gg]et)\w*Remote\w*\(\s*["']([A-Za-z0-9_]+)["']/g,
+  ].forEach((re) => {
+    let m;
+    while ((m = re.exec(all))) made.add(m[1]);
+  });
+  const looked = new Set();
+  const reU =
+    /(?:ReplicatedStorage|[Rr]emotes?\w*|[Ee]vents?\w*)\s*[:.]\s*(?:WaitForChild|FindFirstChild)\(\s*["']([A-Za-z0-9_]+)["']/g;
+  let mm;
+  while ((mm = reU.exec(all))) looked.add(mm[1]);
+  const orphan = [...looked].filter((n) => !made.has(n));
+  unused.forEach((n) =>
+    issues.push({
+      file: "(contract)",
+      sev: "warn",
+      kind: "contract",
+      text: `the contract names "${n}" but no script uses it`,
+    }),
+  );
+  orphan.forEach((n) =>
+    issues.push({
+      file: "(all scripts)",
+      sev: "warn",
+      kind: "contract",
+      text: `"${n}" is looked up but no script creates it (check the spelling by hand)`,
+    }),
+  );
+  items.push({
+    bot: "ContractCheck",
+    tone: !cNames.length ? "info" : unused.length || orphan.length ? "warn" : "ok",
+    head: !cNames.length
+      ? "The contract lists no RemoteEvents, so there was nothing to cross-check"
+      : unused.length || orphan.length
+        ? `${unused.length + orphan.length} shared-name mismatch(es) between the contract and the scripts`
+        : `All ${cNames.length} contract name(s) are used, and every looked-up name is created`,
+    more: [...unused.map((n) => "Unused: " + n), ...orphan.map((n) => "Never created: " + n)].join("\n"),
+  });
+
+  const bad = issues.filter((i) => i.sev === "bad").length,
+    warn = issues.filter((i) => i.sev === "warn").length;
+  const next = nextSteps(g, bad, warn);
+  items.push({
+    bot: "NextSteps",
+    tone: "info",
+    head: `${next.length} tentative steps for you, listed below`,
+    more: "",
+  });
+  return { items, issues, bad, warn, missing: missing.map((f) => f[0]), next };
 }
-function testVerdict(g) {
-  testerVerdicts(g);
-  const lo = g.scores.slice().sort((a, b) => a.s - b.s)[0],
-    hi = g.scores.slice().sort((a, b) => b.s - a.s)[0];
+function applyChecks(g) {
+  const c = g.chk;
+  c.items.forEach((x) => {
+    bset(g, "test", x.bot, x.head, x.tone, x.more);
+    bs(g, "test", x.bot, "done");
+  });
   g.v.test = {
-    good: [
-      `average score ${avg(g.scores)}/10 (target ${TARGET})`,
-      `${hi.n}: ${hi.fb.split(/(?<=[.!?])\s/)[0]}`,
-    ],
-    risks: [`${lo.n} (${lo.s}/10): ${lo.fb.split(/(?<=[.!?])\s/)[0]}`],
-    rec: +avg(g.scores) >= TARGET && crit(g) === 0 ? "APPROVE" : "FIX",
+    good: c.items.filter((x) => x.tone === "ok").map((x) => x.head),
+    risks: c.issues
+      .slice(0, 6)
+      .map((i) => `${i.sev === "bad" ? "Blocking" : "Warning"}: ${studioPath(i.file)}: ${i.text}`),
+    rec: c.bad ? "FIX" : "APPROVE",
   };
-  if (crit(g)) g.v.test.risks.unshift(crit(g) + " critical problem(s): " + critList(g).join(" | "));
 }
+const snap = (g) => ({
+  files: clone(g.files),
+  parser: g.parser ? clone(g.parser) : null,
+  fixed: { ...g.fixed },
+  chk: clone(g.chk),
+  bad: g.chk.bad,
+  warn: g.chk.warn,
+});
 async function s6(g) {
   setS(g, "test", "run");
-  g.scores = await score(g, [0, 1, 2, 3, 4]);
-  testVerdict(g);
+  S("test").bots.forEach((b) => bs(g, "test", b[0], "work"));
+  g.chk = runChecks(g);
+  applyChecks(g);
   g.best = snap(g);
   g.st.test = "wait";
   g.st.ship = "wait";
   render();
 }
-async function redoRatings(all) {
+// Optional and kept clearly apart from the checks: one AI opinion about playtest risks. Not a score, not a test.
+async function aiOpinion() {
   const g = CUR;
-  const idx = all
-    ? g.scores.map((_, i) => i)
-    : Object.keys(g.rsel)
-        .filter((k) => g.rsel[k])
-        .map(Number);
-  if (!idx.length || g.running) return;
+  if (!g || g.running) return;
   g.running = true;
   g.err = "";
   g.stopped = false;
   render();
   try {
-    const sc = await score(g, idx);
-    idx.forEach((i, k) => (g.scores[i] = sc[k]));
-    g.rsel = {};
-    testVerdict(g);
-    g.best = snap(g);
-    g.note = `Re-scored ${idx.length} tester(s). Average is now ${avg(g.scores)}/10.`;
+    const sample = Object.entries(g.files)
+      .map(([p, c]) => `--${p}\n${c.slice(0, 1800)}`)
+      .join("\n---\n")
+      .slice(0, 9000);
+    g.opinion = (
+      await ai(
+        "You are a Roblox developer reading generated scripts that have NOT been run. List the 3 most likely problems a player would hit when playtesting, one line each starting with '- '. Be specific to this code. Do not give a score and do not claim that anything works.",
+        sample,
+        300,
+        g,
+      )
+    ).trim();
   } catch (e) {
     fail(g, e);
   }
   g.running = false;
   render();
 }
-function togSel(i) {
-  const g = CUR;
-  if (g.running) return;
-  g.rsel[i] = !g.rsel[i];
-  render();
-}
 
 async function fixOnce(g) {
   g.round++;
-  const before = clone(g.scores);
+  const before = g.chk;
   g.open.fix = true;
   g.st.fix = "run";
-  ["Wizard", "Coders", "Testers"].forEach((n) => (g.bot["fix:" + n] = "idle"));
-  g.bot["fix:Wizard"] = "work";
+  ["Planner", "Coders", "Checker"].forEach((n) => (g.bot["fix:" + n] = "idle"));
+  g.bot["fix:Planner"] = "work";
   render();
-  const w = await ai(
-    "You are the Wizard. Delegate fixes to the Coders to raise the tester scores. Pick at most 3 files. One line per file, exactly: FILE: <path from the list> | FIX: <specific change>." +
-      (g.lastFail ? " " + g.lastFail : ""),
-    "Files: " +
-      Object.keys(g.files).join(", ") +
-      "\nTester issues:\n" +
-      before.map((x) => `${x.n} (${x.s}/10): ${x.fb}`).join("\n"),
-    400,
-    g,
-  );
-  let jobs = [];
-  const seen = {};
-  w.split("\n")
-    .map((l) => /FILE:\s*([^|]+)\|\s*FIX:\s*(.+)/i.exec(l))
-    .filter(Boolean)
-    .forEach((m) => {
-      const k = resolvePath(g, m[1]);
-      if (k && !seen[k]) {
-        seen[k] = 1;
-        jobs.push([k, m[2].trim()]);
-      }
-    });
-  // Safety net: if the Wizard named nothing usable, pick the files that actually have problems.
-  if (!jobs.length) {
-    const fb = before
-      .map((x) => x.fb)
-      .join(" ")
-      .toLowerCase();
-    const broken = g.parser
-      ? Object.values(g.parser)
-          .filter((r) => !r.syntaxOk || (r.undefinedGlobals || []).length)
-          .map((r) => r.name)
-      : [];
-    const named = Object.keys(g.files).filter((k) => fb.includes(k.split("/").pop().toLowerCase()));
-    [...broken, ...named].forEach((k) => {
-      if (g.files[k] && !seen[k]) {
-        seen[k] = 1;
-        jobs.push([
-          k,
-          "Fix the problems the testers and the machine check reported: " +
-            (critList(g).join("; ") ||
-              before
-                .map((x) => x.fb)
-                .join(" ")
-                .slice(0, 400)),
-        ]);
-      }
-    });
-  }
-  jobs = jobs.slice(0, 3);
+
+  // Planner (no AI): every blocking problem becomes a job. Missing files are created, broken files are rewritten.
+  const byFile = {};
+  before.issues
+    .filter((i) => i.sev === "bad" && g.files[i.file] !== undefined)
+    .forEach((i) => (byFile[i.file] = byFile[i.file] || []).push(i));
+  before.missing.forEach((p) => (byFile[p] = byFile[p] || [{ kind: "missing", text: "file is missing" }]));
+  const jobs = Object.entries(byFile)
+    .map(([file, list]) => {
+      const req = REQUIRED_FILES.find((f) => f[0] === file);
+      return {
+        file,
+        create: !!req && list.some((i) => i.kind === "missing"),
+        job: req ? req[1] : "",
+        text: list.map((i) => i.text).join("; "),
+      };
+    })
+    .sort((a, b) => b.create - a.create)
+    .slice(0, 4);
   if (!jobs.length)
-    throw new Error(
-      "The Wizard named no valid file to fix, and no broken file could be found. Click Keep improving to try again.",
-    );
-  g.out.fix =
-    "Round " +
-    g.round +
-    ": Wizard delegated\n" +
-    jobs.map((j) => j[0].split("/").join(" → ") + "\n   fix: " + j[1]).join("\n");
+    throw new Error("No file could be matched to the blocking problems. Fix them by hand (see Next steps).");
+  const names = jobs.map((j) => j.file.split("/").pop()).join(", ");
   bv(
     g,
     "fix",
-    "Wizard",
-    `Round ${g.round}: delegated ${jobs.length} file(s): ${jobs.map((j) => j[0].split("/").pop()).join(", ")}`,
+    "Planner",
+    `Round ${g.round}: ${before.bad} blocking problem(s), ${jobs.length} job(s): ${names}`,
     "info",
-    jobs.map((j) => j[0].split("/").join(" \u2192 ") + "\n   fix: " + j[1]).join("\n"),
+    jobs.map((j) => `${j.create ? "CREATE" : "FIX"} ${studioPath(j.file)}\n   because: ${j.text}`).join("\n"),
   );
-  g.bot["fix:Wizard"] = "done";
+  g.out.fix =
+    "Round " +
+    g.round +
+    ":\n" +
+    jobs.map((j) => `${j.create ? "Create" : "Fix"} ${studioPath(j.file)}: ${j.text}`).join("\n");
+  g.bot["fix:Planner"] = "done";
   g.bot["fix:Coders"] = "work";
   render();
+
   await Promise.all(
     jobs.map(async (j) => {
+      if (j.create) return writeFile(g, [j.file, j.job]);
       const c = await ai(
         "Expert Roblox Lua scripter. Apply the requested fix to this script and keep everything else working. Plain Lua only. Output ONLY the COMPLETE corrected file from the first line to the last line. Never output a partial patch, never write 'rest unchanged', and finish every table, function and if-block.",
-        `Fix: ${j[1]}\n\nMachine check for this file: ${(g.parser && g.parser[j[0]] && (g.parser[j[0]].syntaxOk ? ((g.parser[j[0]].undefinedGlobals || []).length ? "undefined variables " + g.parser[j[0]].undefinedGlobals.join(", ") : "ok") : g.parser[j[0]].error)) || "unknown"}\n\nCONTRACT:\n${g.contract || "(none)"}\n\nOther files: ${Object.keys(g.files).join(", ")}\n\nScript ${j[0]}:\n${g.files[j[0]]}`,
+        `Problems found by the checker: ${j.text}\n${g.lastFail || ""}\n\nCONTRACT:\n${g.contract || "(none)"}\n\nOther files: ${Object.keys(g.files).join(", ")}\n\nScript ${j.file}:\n${g.files[j.file]}`,
         4000,
         g,
       );
-      g.files[j[0]] = code0(c);
+      g.files[j.file] = code0(c);
     }),
   );
   g.bot["fix:Coders"] = "done";
-  g.bot["fix:Testers"] = "work";
+  g.bot["fix:Checker"] = "work";
   await checkFiles(g);
-  g.scores = await score(g, [0, 1, 2, 3, 4]);
-  g.bot["fix:Testers"] = "done";
-  // Keep a new version only if it has FEWER critical problems, or the same number and a better average. A higher average alone is not enough.
-  const a = +avg(g.scores),
-    c1 = crit(g),
-    c0 = g.best.crit,
-    kept = c1 < c0 || (c1 === c0 && a > g.best.avg);
-  g.rounds.push({ n: g.round, before, now: clone(g.scores), kept, a0: g.best.avg, a1: a, c0, c1 });
+  const after = runChecks(g);
+  // Keep the new version only if it has fewer blocking problems, or the same number and fewer warnings.
+  const kept = after.bad < before.bad || (after.bad === before.bad && after.warn < before.warn);
+  g.rounds.push({
+    n: g.round,
+    before: { bad: before.bad, warn: before.warn },
+    after: { bad: after.bad, warn: after.warn },
+    kept,
+    jobs: jobs.map((j) => ({ file: j.file, create: j.create })),
+  });
   if (kept) {
+    g.chk = after;
     g.best = snap(g);
     g.lastFail = "";
+    jobs.forEach((j) => (g.rewrote[j.file] = (g.rewrote[j.file] || []).concat(g.round)));
   } else {
     g.files = clone(g.best.files);
-    g.scores = clone(g.best.scores);
     g.parser = g.best.parser ? clone(g.best.parser) : null;
     g.fixed = { ...g.best.fixed };
-    g.lastFail = `The last attempt (average ${a}, ${c1} critical problem(s)) was not better than the saved version (average ${g.best.avg}, ${c0} critical problem(s)) and was reverted. Try a different approach.`;
+    g.chk = clone(g.best.chk);
+    g.lastFail = `The last attempt had ${after.bad} blocking problem(s) and ${after.warn} warning(s), which was not better than the saved version (${before.bad} and ${before.warn}), so it was reverted. Try a different approach.`;
   }
-  const names = jobs.map((j) => j[0].split("/").pop()).join(", ");
-  if (kept) jobs.forEach((j) => (g.rewrote[j[0]] = (g.rewrote[j[0]] || []).concat(g.round)));
+  g.bot["fix:Checker"] = "done";
   bv(
     g,
     "fix",
     "Coders",
-    `Round ${g.round}: rewrote ${names}; ${kept ? "kept the new versions" : "reverted, they were not better"}`,
+    `Round ${g.round}: ${jobs.some((j) => j.create) ? "created/rewrote" : "rewrote"} ${names}; ${kept ? "kept the new versions" : "reverted, they were not better"}`,
     kept ? "ok" : "warn",
     "",
   );
   bv(
     g,
     "fix",
-    "Testers",
-    `Round ${g.round}: average ${g.rounds[g.rounds.length - 1].a0} \u2192 ${a}; critical problems ${c0} \u2192 ${c1}`,
+    "Checker",
+    `Round ${g.round}: blocking problems ${before.bad} \u2192 ${after.bad}, warnings ${before.warn} \u2192 ${after.warn} (${kept ? "kept" : "reverted"})`,
     kept ? "ok" : "warn",
     "",
   );
   codeVerdicts(g);
-  testVerdict(g);
+  applyChecks(g);
   g.st.fix = "done";
   render();
 }
@@ -1434,19 +1629,18 @@ async function improve(g) {
   g.note = "";
   render();
   try {
-    while ((+avg(g.scores) < TARGET || crit(g) > 0) && g.round < MAXR && !g.stopped) await fixOnce(g);
+    while (g.chk.bad > 0 && g.round < MAXR && !g.stopped) await fixOnce(g);
     g.note =
-      +avg(g.scores) >= TARGET && crit(g) === 0
-        ? `Target reached: average ${avg(g.scores)}/10 and no critical problems.`
-        : crit(g) > 0
-          ? `Stopped after ${g.round} fix round(s) with ${crit(g)} critical problem(s) left: ${critList(g).join(" | ")}. Click Keep improving, or fix those by hand in Studio.`
-          : `Stopped at average ${avg(g.scores)}/10 after ${g.round} fix round(s) (max ${MAXR}). Click Keep improving, or redo ratings you doubt.`;
+      g.chk.bad === 0
+        ? `All blocking problems are fixed${g.chk.warn ? `; ${g.chk.warn} warning(s) remain (advice only)` : ""}.`
+        : `Stopped after ${g.round} fix round(s) with ${g.chk.bad} blocking problem(s) left. Click Fix again, or fix them by hand in Studio (see Next steps).`;
   } catch (e) {
     fail(g, e);
   }
   g.running = false;
   render();
 }
+
 function keepImproving() {
   const g = CUR;
   g.round = Math.max(0, g.round - 2);
@@ -1567,10 +1761,6 @@ async function helper(text) {
     }
     step(3, "done");
     step(4, "run");
-    const t = await ai(
-      "You are a tester. Reply 'Score: X/10' then one sentence.",
-      "Code:\n" + c.slice(0, 1500),
-    );
     step(4, "done");
     g.files[path] = c;
     const v = await validate([{ name: path, source: c }]);
@@ -1578,7 +1768,18 @@ async function helper(text) {
       g.parser = g.parser || {};
       g.parser[path] = v[0];
     }
-    HP.msg = `Added ${path}. Tester: ${t.trim().slice(0, 160)}`;
+    const found = [
+      ...fileIssues(g, path),
+      ...(v && v[0] && !v[0].syntaxOk ? [{ sev: "bad", text: "does not parse: " + v[0].error }] : []),
+    ];
+    HP.msg = `Added ${path}. Checker: ${
+      found.length
+        ? found
+            .map((i) => i.text)
+            .join("; ")
+            .slice(0, 200)
+        : "name, type, location and syntax all look fine"
+    }`;
     g.tab = "files";
     $("hin").value = "";
   } catch (e) {
@@ -1660,19 +1861,13 @@ function filesTab(g) {
   return (
     table +
     groups +
-    `<div class="row"><button class="btn ol" onclick="cpAll()">Copy all code</button><button class="btn ol" onclick="dl()">Download all (.txt)</button></div><div class="card" style="margin-top:.9rem"><div class="lbl" style="margin-top:0">Put it in Studio</div><div class="mut">In the Explorer, create each script of the type shown, at the location shown, and paste the code in. Press Play and watch the Output window. If something breaks, ask the Helper or fix it by hand.</div></div>`
+    `<div class="row"><button class="btn ol" onclick="cpAll()">Copy all code</button><button class="btn ol" onclick="dl()">Download all (.txt)</button><button class="btn ol" onclick="dlReport()">Download run report (.json)</button></div><div class="card" style="margin-top:.9rem"><div class="lbl" style="margin-top:0">Put it in Studio</div><div class="mut">In the Explorer, create each script of the type shown, at the location shown, and paste the code in. Press Play and watch the Output window. If something breaks, ask the Helper or fix it by hand.</div></div>`
   );
 }
 const vd = (v) =>
   `<div class="vd ${v.rec}"><div class="h">Verdict: ${v.rec === "APPROVE" ? "APPROVE" : "FIX BEFORE APPROVING"}</div><div class="c"><div><h5>What is good</h5><ul>${v.good.map((x) => `<li>${esc(x)}</li>`).join("") || "<li>-</li>"}</ul></div><div><h5>Watch out</h5><ul>${v.risks.map((x) => `<li>${esc(x)}</li>`).join("") || "<li>nothing major</li>"}</ul></div></div></div>`;
 const rtab = (r) =>
-  `<div class="lbl">Round ${r.n}: average ${r.a0} → ${r.a1} (${r.kept ? "kept" : "reverted to the better version"}) · critical problems ${r.c0 == null ? "-" : r.c0} → ${r.c1 == null ? "-" : r.c1}</div><table class="cmp"><tr><th>Tester</th><th>Before</th><th>After</th><th>Change</th></tr>${r.now
-    .map((x, i) => {
-      const p = r.before[i] ? r.before[i].s : 0,
-        d = x.s - p;
-      return `<tr><td>${x.n}</td><td>${p}/10</td><td>${x.s}/10</td><td class="${d > 0 ? "up" : d < 0 ? "dn" : ""}">${d > 0 ? "+" : ""}${d}</td></tr>`;
-    })
-    .join("")}</table>`;
+  `<div class="lbl">Round ${r.n}: blocking problems ${r.before.bad} \u2192 ${r.after.bad}, warnings ${r.before.warn} \u2192 ${r.after.warn} (${r.kept ? "kept" : "reverted to the better version"})</div>${ul(r.jobs.map((j) => `${j.create ? "Created" : "Rewrote"} ${studioPath(j.file)}`))}`;
 function stg(g, s) {
   const st = g.st[s.id] || "idle";
   if (s.id === "fix" && !g.st.fix) return "";
@@ -1744,33 +1939,46 @@ function stg(g, s) {
     b += walkBox("How the final game will look and play (after improvements)", g.walk1, 1);
   }
   if (s.id === "design") {
-    if (g.imgState === "ok")
-      b += `<div class="lbl">Bird's-eye image</div><img class="sketch" alt="Bird's-eye view of the game" src="${esc(g.imgSrc)}">`;
-    else if (g.imgState === "load")
-      b += `<div class="lbl">Bird's-eye image</div><div class="mut">Generating image, this can take up to a minute...</div>`;
-    else if (g.imgState === "fail")
-      b +=
-        `<div class="lbl">Bird's-eye layout</div>` +
-        (g.svg
-          ? `<img class="sketch" alt="Drawn layout" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(g.svg)}"><div class="mut">The image service did not respond, so this is an AI-drawn layout instead.</div>`
-          : `<div class="mut">${g.svgFail ? "No image could be produced. Click Redo image." : "Image service did not respond, drawing a layout..."}</div>`);
+    if (g.imgState === "load")
+      b += `<div class="lbl">Top-down layout</div><div class="mut">Drawing the layout from the MapBot's numbers...</div>`;
+    else if (g.imgState === "ok" && g.layout) {
+      b += `<div class="lbl">Top-down layout (drawn by code from the MapBot spec, not an AI picture)</div><img class="sketch" alt="Top-down layout of the arena" src="data:image/svg+xml;charset=utf-8,${encodeURIComponent(g.svg)}">`;
+      b += `<table class="cmp"><tr><th>#</th><th>Zone</th><th>Kind</th><th>Centre x, z</th><th>Size w x d</th></tr>${g.layout.zones.map((z, i) => `<tr><td>${i + 1}</td><td>${esc(z.name)}</td><td>${ZONE_KINDS[z.kind][1]}</td><td>${z.x}, ${z.z}</td><td>${z.w} x ${z.d}</td></tr>`).join("")}</table>`;
+    } else if (g.imgState === "fail")
+      b += `<div class="lbl">Top-down layout</div><div class="mut">The layout could not be read from the model's answer. Click Redo layout.</div>`;
     if (g.imgState && g.imgState !== "load")
-      b += `<div class="act"><button class="btn ol sm" onclick="startImg(CUR)">Redo image</button></div>`;
+      b += `<div class="act"><button class="btn ol sm" onclick="startLayout(CUR)">Redo layout</button><button class="btn ol sm" ${g.artState === "load" ? "disabled" : ""} onclick="conceptArt(CUR)">Generate AI concept art (experimental)</button></div>`;
+    if (g.artState === "load")
+      b += `<div class="mut">Generating concept art, this can take up to a minute...</div>`;
+    if (g.artState === "ok")
+      b += `<div class="lbl">AI concept art (mood only. It does NOT match the scripts or the numbers)</div><img class="sketch" alt="AI concept art" src="${esc(g.artSrc)}">`;
+    if (g.artState === "fail")
+      b += `<div class="mut">The free image service did not respond. The layout above is unaffected.</div>`;
   }
   if (g.out[s.id] && s.id !== "better")
     b += `<div class="lbl">Output</div><pre class="out">${esc(g.out[s.id])}</pre>`;
-  if (s.id === "test" && g.scores.length) {
-    b += `<div class="lbl">Ratings and issues (click a rating to select it, then redo)</div><div class="sc">${g.scores.map((x, i) => `<div class="sk ${g.rsel[i] ? "sel" : ""}" onclick="togSel(${i})"><b class="${x.s >= 8 ? "g" : x.s >= 5 ? "a" : "r"}">${x.s}/10</b><h6>${x.n}</h6>${esc(x.fb)}</div>`).join("")}</div>`;
-    b += `<div class="act"><button class="btn ol" ${g.running || !Object.values(g.rsel).some(Boolean) ? "disabled" : ""} onclick="redoRatings(false)">Redo selected ratings</button><button class="btn ol" ${g.running ? "disabled" : ""} onclick="redoRatings(true)">Redo all ratings</button></div>`;
+  if (s.id === "test" && g.chk) {
+    const c = g.chk;
+    b += `<div class="lbl">Checks on the files you actually have (no AI scores)</div><table class="cmp"><tr><th></th><th>Check</th><th>Result</th></tr>${c.items.map((x) => `<tr><td><span class="dot ${x.tone}"></span></td><td>${esc(x.bot)}</td><td>${esc(x.head)}</td></tr>`).join("")}</table>`;
+    b += `<div class="lbl">Required files</div><table class="cmp"><tr><th>File</th><th>Type</th><th>Where it goes in Studio</th><th>Status</th></tr>${REQUIRED_FILES.map((f) => `<tr><td>${esc(f[0].split("/").pop())}</td><td>${kind(f[0])}</td><td class="mono">${esc(studioPath(f[0]))}</td><td>${c.missing.includes(f[0]) ? '<span class="chip bad">missing</span>' : '<span class="chip ok">present</span>'}</td></tr>`).join("")}</table>`;
+    if (c.issues.length)
+      b += `<div class="lbl">Problems found</div>${ul(c.issues.map((i) => `${i.sev === "bad" ? "Blocking" : "Warning"}: ${studioPath(i.file)}: ${i.text}`))}`;
+    b += `<div class="walk"><div class="lbl" style="margin-top:0">Next steps for you (tentative)</div><ol>${c.next.map((x) => `<li>${esc(x)}</li>`).join("")}</ol></div>`;
+    b += `<div class="act"><button class="btn ol sm" ${g.running ? "disabled" : ""} onclick="aiOpinion()">Ask AI for playtest risks (an opinion, not a test)</button></div>`;
+    if (g.opinion)
+      b += `<div class="vd" style="border-left-color:#8b93a7"><div class="h">AI opinion, not a test</div><pre class="out">${esc(g.opinion)}</pre></div>`;
   }
-  if (s.id === "fix") b += g.rounds.map(rtab).join("");
+  if (s.id === "fix" && g.rounds.length)
+    b +=
+      `<div class="mut">${g.rounds.filter((r) => !r.kept).length} of ${g.rounds.length} fix round(s) were reverted because they were not better.</div>` +
+      g.rounds.map(rtab).join("");
   if (g.v[s.id]) b += vd(g.v[s.id]);
   if (s.id === "wiz" && st === "wait")
-    b += `<div class="act"><button class="btn gr" onclick="approve()">Approve, run testers</button><button class="btn ol" onclick="jump('idea')">Choose a different idea</button></div>`;
-  if (s.id === "test" && g.scores.length && !g.shipped) {
+    b += `<div class="act"><button class="btn gr" onclick="approve()">Approve, run the checks</button><button class="btn ol" onclick="jump('idea')">Choose a different idea</button></div>`;
+  if (s.id === "test" && g.chk && !g.shipped) {
     b +=
       (g.note ? `<div class="mut" style="margin-top:8px">${esc(g.note)}</div>` : "") +
-      `<div class="act">${+avg(g.scores) < TARGET || crit(g) > 0 ? `<button class="btn" ${g.running ? "disabled" : ""} onclick="keepImproving()">Keep improving to ${TARGET}/10</button>` : ""}<button class="btn gr" ${g.running ? "disabled" : ""} onclick="ship()">Ship it (stops all bots)</button></div>`;
+      `<div class="act">${g.chk.bad > 0 ? `<button class="btn" ${g.running ? "disabled" : ""} onclick="keepImproving()">Fix ${g.chk.bad} blocking problem(s) automatically</button>` : ""}<button class="btn gr" ${g.running ? "disabled" : ""} onclick="ship()">Ship it (stops all bots)</button></div>`;
   }
   if (s.id === "ship" && (st === "wait" || st === "done"))
     b +=
@@ -1871,6 +2079,34 @@ function save(name, text) {
 function dlOne(i) {
   const p = Object.keys(CUR.files)[i];
   save(p.split("/").pop() + fileExt(p), CUR.files[p]);
+}
+// Everything needed to reproduce and compare a run: the idea, every check result, every fix round and the regression count.
+function runReport(g) {
+  return {
+    tool: "wizgame",
+    generatedAt: new Date().toISOString(),
+    theme: g.theme,
+    chosenIdea: g.idea0,
+    finalIdea: g.ideaNow,
+    checks: g.chk && {
+      blockingProblems: g.chk.bad,
+      warnings: g.chk.warn,
+      items: g.chk.items.map((x) => ({ bot: x.bot, tone: x.tone, head: x.head })),
+      issues: g.chk.issues,
+    },
+    fixRounds: g.rounds,
+    regression: { rounds: g.rounds.length, reverted: g.rounds.filter((r) => !r.kept).length },
+    parser: g.parser,
+    files: Object.fromEntries(
+      Object.entries(g.files).map(([p, c]) => [
+        p,
+        { type: kind(p), studioLocation: studioPath(p), lines: c.split("\n").length },
+      ]),
+    ),
+  };
+}
+function dlReport() {
+  save(CUR.name.replace(/\W+/g, "_") + "-run-report.json", JSON.stringify(runReport(CUR), null, 2));
 }
 function dl() {
   save(CUR.name.replace(/\W+/g, "_") + ".txt", txt(CUR));
