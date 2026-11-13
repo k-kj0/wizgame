@@ -56,3 +56,38 @@ test('rewrites compound assignment without changing line count', () => {
 test('rejects an empty file', () => {
   assert.strictEqual(check('   ').syntaxOk, false);
 });
+
+// ---- Luau-aware path ----
+test('accepts real Luau: type annotations, casts and string interpolation', () => {
+  const src = [
+    'type Stats = { hp: number, name: string? }',
+    'local function heal(s: Stats, n: number): Stats',
+    '  s.hp += n',
+    '  return s',
+    'end',
+    'local msg = `hp is {heal({ hp = 1 }, 2).hp}`',
+    'local v = (workspace :: any).Gravity',
+    'for i = 1, 3 do if i == 2 then continue end end',
+  ].join('\n');
+  const r = check(src);
+  assert.strictEqual(r.syntaxOk, true, r.error);
+  assert.strictEqual(r.engine, 'luau');
+});
+
+test('still rejects broken Luau and reports a line number', () => {
+  const r = check('local x: number = = 3');
+  assert.strictEqual(r.syntaxOk, false);
+  assert.match(r.error, /\(1:\d+\)/);
+});
+
+test('flags a cut-off table as truncated', () => {
+  const r = check('local t = {\n  a = 1,\n  b = ');
+  assert.strictEqual(r.syntaxOk, false);
+  assert.strictEqual(r.truncated, true);
+});
+
+test('says when the undeclared-variable check was skipped for Luau-only syntax', () => {
+  const r = check('local function f(a: number): number return a end');
+  assert.strictEqual(r.syntaxOk, true);
+  assert.ok(r.notes.length >= 1);
+});
