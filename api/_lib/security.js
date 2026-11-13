@@ -1,33 +1,47 @@
-const hits = new Map(); // per-instance memory; fine for a portfolio project
-const ALLOWED = (process.env.ALLOWED_ORIGINS || '')
-  .split(',').map(s => s.trim()).filter(Boolean);
+const test = require('node:test');
+const assert = require('node:assert');
+const http = require('node:http');
+const { rateLimited } = require('../api/_lib/security');
 
-function applyCors(req, res) {
-  const origin = req.headers.origin;
-  if (origin && ALLOWED.includes(origin)) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-    res.setHeader('Vary', 'Origin');
-  }
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-}
+const req = (ip) => ({ headers: { 'x-forwarded-for': ip } });
 
-function rateLimited(req, limit, windowMs = 60_000) {
-  const ip = (req.headers['x-forwarded-for'] || 'unknown').split(',')[0].trim();
-  const now = Date.now();
-  const recent = (hits.get(ip) || []).filter(t => now - t < windowMs);
-  recent.push(now);
-  hits.set(ip, recent);
-  return recent.length > limit;
-}
+test('in-memory limiter blocks after the limit', async () => {
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  const ip = 'mem-' + Math.random();
+  for (let i = 0; i < 3; i++) assert.strictEqual(await rateLimited(req(ip), 3), false);
+  assert.strictEqual(await rateLimited(req(ip), 3), true);
+});
 
-// returns true if the request was fully handled (caller should return)
-function guard(req, res, limit = 60) {
-  applyCors(req, res);
-  if (req.method === 'OPTIONS') { res.status(200).end(); return true; }
-  if (req.method !== 'POST') { res.status(405).json({ error: 'Method not allowed' }); return true; }
-  if (rateLimited(req, limit)) { res.status(429).json({ error: 'Too many requests, slow down.' }); return true; }
-  return false;
-}
+test('shared limiter uses the Redis REST counter when configured', async () => {
+  const counts = {};
+  const server = http.createServer((rq, rs) => {
+    let body = '';
+    rq.on('data', (d) => (body += d));
+    rq.on('end', () => {
+      const cmds = JSON.parse(body);
+      const key = cmds[0][1];
+      counts[key] = (counts[key] || 0) + 1;
+      rs.setHeader('Content-Type', 'application/json');
+      rs.end(JSON.stringify([{ result: counts[key] }, { result: 1 }]));
+    });
+  });
+  await new Promise((r) => server.listen(0, r));
+  process.env.UPSTASH_REDIS_REST_URL = 'http://127.0.0.1:' + server.address().port;
+  process.env.UPSTASH_REDIS_REST_TOKEN = 'test';
+  const ip = 'shared-' + Math.random();
+  assert.strictEqual(await rateLimited(req(ip), 2), false);
+  assert.strictEqual(await rateLimited(req(ip), 2), false);
+  assert.strictEqual(await rateLimited(req(ip), 2), true);
+  server.close();
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+});
 
-module.exports = { guard };
+test('falls back to memory (and does not block users) when the shared store is down', async () => {
+  process.env.UPSTASH_REDIS_REST_URL = 'http://127.0.0.1:1';
+  process.env.UPSTASH_REDIS_REST_TOKEN = 'test';
+  const ip = 'down-' + Math.random();
+  assert.strictEqual(await rateLimited(req(ip), 5), false);
+  delete process.env.UPSTASH_REDIS_REST_URL;
+  delete process.env.UPSTASH_REDIS_REST_TOKEN;
+});
