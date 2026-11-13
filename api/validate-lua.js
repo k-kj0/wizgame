@@ -1,4 +1,8 @@
 const luaparse = require('luaparse');
+// Real Luau parser (types, +=, continue, string interpolation). Optional: if it fails to load we fall
+// back to luaparse alone, which is stricter than Luau and can raise false syntax errors.
+let luau = null;
+try { luau = require('luau-parser'); } catch (e) { luau = null; }
 const { guard } = require('./_lib/security');
 
 const MAX_FILES = 20;
@@ -43,10 +47,21 @@ function luauToPlain(src) {
   }).join('\n');
 }
 
+function syntaxFailure(out, e) {
+  out.syntaxOk = false;
+  out.error = String(e.message || e).slice(0, 200);
+  // "<eof>" means the file ended too early: the AI ran out of space mid-script.
+  if (/<eof>/.test(out.error)) {
+    out.truncated = true;
+    out.error += ' (the file looks cut off: the AI stopped before finishing it)';
+  }
+  return out;
+}
+
 function checkOne(file) {
   const name = String(file && file.name || 'unnamed');
   const source = String(file && file.source || '');
-  const out = { name, syntaxOk: true, error: null, warnings: [], undefinedGlobals: [], truncated: false };
+  const out = { name, syntaxOk: true, error: null, warnings: [], notes: [], undefinedGlobals: [], truncated: false, engine: null };
 
   if (!source.trim()) {
     out.syntaxOk = false;
@@ -60,22 +75,33 @@ function checkOne(file) {
   }
 
   let ast = null;
-  try {
-    ast = luaparse.parse(luauToPlain(source), { luaVersion: '5.3', scope: true, comments: false });
-  } catch (e) {
-    out.syntaxOk = false;
-    out.error = String(e.message || e).slice(0, 200);
-    // "near <eof>" means the file ended too early: the AI ran out of space mid-script.
-    if (/<eof>/.test(out.error)) {
-      out.truncated = true;
-      out.error += ' (the file looks cut off: the AI stopped before finishing it)';
+  if (luau) {
+    // 1) Syntax is decided by the Luau parser, because that is the language Roblox runs.
+    try {
+      luau.parse(source);
+      out.engine = 'luau';
+    } catch (e) {
+      out.engine = 'luau';
+      return syntaxFailure(out, e);
     }
-    return out;
+    // 2) Undeclared-variable check still uses luaparse, which can only read plain Lua.
+    try {
+      ast = luaparse.parse(luauToPlain(source), { luaVersion: '5.3', scope: true, comments: false });
+    } catch (e) {
+      out.notes.push('Uses Luau-only syntax, so the undeclared-variable check was skipped for this file.');
+    }
+  } else {
+    out.engine = 'luaparse';
+    try {
+      ast = luaparse.parse(luauToPlain(source), { luaVersion: '5.3', scope: true, comments: false });
+    } catch (e) {
+      return syntaxFailure(out, e);
+    }
   }
 
   // Undefined globals: catches typos like "works" or "charact".
   const seen = new Set();
-  (ast.globals || []).forEach(g => {
+  ((ast && ast.globals) || []).forEach(g => {
     if (g && g.name && !ROBLOX_GLOBALS.has(g.name) && !seen.has(g.name)) {
       seen.add(g.name);
       out.undefinedGlobals.push(g.name);
@@ -96,8 +122,8 @@ function checkOne(file) {
   return out;
 }
 
-module.exports = function handler(req, res) {
-  if (guard(req, res, 120)) return;
+async function handler(req, res) {
+  if (await guard(req, res, 120)) return;
 
   const files = req.body && req.body.files;
   if (!Array.isArray(files) || files.length === 0) {
@@ -109,4 +135,9 @@ module.exports = function handler(req, res) {
 
   res.setHeader('Cache-Control', 'no-store');
   return res.status(200).json({ results: files.map(checkOne) });
-};
+}
+
+module.exports = handler;
+// Exposed so the unit tests can call the checker without an HTTP request.
+module.exports.checkOne = checkOne;
+module.exports.luauToPlain = luauToPlain;
