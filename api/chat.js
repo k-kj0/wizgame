@@ -5,7 +5,7 @@ const MAX_PROMPT_CHARS = 60000;
 const MAX_TOKENS_CAP = 8000;
 
 module.exports = async function handler(req, res) {
-  if (guard(req, res, 120)) return;
+  if (await guard(req, res, 120)) return;
 
   const reqId = Math.random().toString(36).slice(2, 8);
   const { system, messages, max_tokens } = req.body || {};
@@ -40,6 +40,7 @@ module.exports = async function handler(req, res) {
   }
 
   const tokens = Math.min(Number(max_tokens) || 2000, MAX_TOKENS_CAP);
+  const t0 = Date.now();
   const key = orKey();
   const models = await pickModels(key);
   const result = await complete({
@@ -50,7 +51,8 @@ module.exports = async function handler(req, res) {
     siteUrl: process.env.SITE_URL || `https://${req.headers.host}`,
   });
 
-  console.log(JSON.stringify({ reqId, ok: result.ok, model: result.model, attempts: result.attempts }));
+  const ms = Date.now() - t0;
+  console.log(JSON.stringify({ reqId, ok: result.ok, model: result.model, ms, attempts: result.attempts }));
 
   if (result.ok) {
     const text = result.text;
@@ -59,6 +61,7 @@ module.exports = async function handler(req, res) {
       content: [{ type: 'text', text }],
       choices: [{ message: { role: 'assistant', content: text } }],
       model: result.model,
+      ms,
       reqId,
     });
   }
